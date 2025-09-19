@@ -1,158 +1,70 @@
 <template>
-  <a-card class="cafeteria-card" :body-style="{ padding: 'var(--space-sm)' }">
-    <a-row :gutter="[16, 16]">
-      <!-- 图片区域 -->
-      <a-col :span="8">
-        <div class="cafeteria-image" :style="{ backgroundImage: `url(${cafeteria.image})` }" />
-      </a-col>
+  <a-card
+    :style="cardStyle"
+    :body-style="{ padding: '16px' }"
+    @mouseenter="handleEnter"
+    @mouseleave="handleLeave"
+    :class="{ 'card-hover': hover }"
+    @click="goDetail"
+  >
+    <div :style="imageBox">
+      <div :style="imageStyle"></div>
+      <a-tag :color="cafeteria.isOpen ? 'green' : 'default'" :style="openTag">{{ cafeteria.isOpen ? 'Open' : 'Closed' }}</a-tag>
+      <a-tag color="default" :style="distanceTag">⟂ {{ cafeteria.distance }}</a-tag>
+    </div>
 
-      <!-- 内容区域 -->
-      <a-col :span="16">
-        <div class="cafeteria-info">
-          <a-typography-title :level="5" class="cafeteria-name">
-            {{ cafeteria.name }}
-          </a-typography-title>
-          
-          <a-typography-text class="cafeteria-meta">
-            {{ cafeteria.school }} · {{ cafeteria.distance }}
-          </a-typography-text>
+    <div style="margin-top: 12px;">
+      <a-typography-title :level="4" style="margin: 0 0 4px 0;">{{ cafeteria.name }}</a-typography-title>
+      <a-typography-text type="secondary">{{ cafeteria.school }}</a-typography-text>
 
-          <!-- 评分和评价数 -->
-          <div class="rating-section">
-            <a-rate :value="cafeteria.rating" disabled class="rating-stars" />
-            <a-typography-text strong class="rating-text">
-              {{ cafeteria.rating }}
-            </a-typography-text>
-            <a-typography-text type="secondary" class="reviews-text">
-              ({{ cafeteria.reviews }}条评价)
-            </a-typography-text>
-          </div>
+      <div style="margin-top: 8px;">
+        <a-space size="small">
+          <a-typography-text type="secondary">{{ cafeteria.hours || '6:00 AM - 6:00 PM' }}</a-typography-text>
+        </a-space>
+      </div>
 
-          <!-- 商户列表 -->
-          <a-space v-if="cafeteria.stalls && cafeteria.stalls.length" direction="vertical" :size="8" class="stalls-list">
-            <div
-              v-for="stall in cafeteria.stalls.slice(0, 2)"
-              :key="stall.id"
-              class="stall-item"
-            >
-              <div class="stall-info">
-                <a-typography-text strong class="stall-name">
-                  {{ stall.name }}
-                </a-typography-text>
-                <a-typography-text type="secondary" class="stall-cuisine">
-                  {{ stall.cuisine }}
-                </a-typography-text>
-              </div>
-              <div class="stall-details">
-                <a-typography-text strong class="stall-rating">
-                  {{ stall.rating }}
-                </a-typography-text>
-                <a-typography-text type="secondary" class="stall-price">
-                  {{ stall.price }}
-                </a-typography-text>
-              </div>
-            </div>
-            
-            <a-typography-text v-if="cafeteria.stalls.length > 2" class="more-stalls">
-              还有{{ cafeteria.stalls.length - 2 }}家商户...
-            </a-typography-text>
-          </a-space>
-        </div>
-      </a-col>
-    </a-row>
+      <div style="margin-top: 8px;">
+        <a-space wrap>
+          <a-tag v-for="(c, i) in cafeteria.cuisines || []" :key="i">{{ c }}</a-tag>
+        </a-space>
+      </div>
+
+      <div style="margin-top: 10px; display:flex; align-items:center;">
+        <a-rate :value="cafeteria.rating" disabled style="font-size:14px; margin-right:6px" />
+        <strong style="color:#f7931e;">{{ cafeteria.rating }}</strong>
+        <a-typography-text type="secondary" style="margin-left:8px">· {{ cafeteria.reviews }} reviews</a-typography-text>
+      </div>
+
+      <a-typography-text v-if="!hasMerchants" type="secondary" style="display:block; margin-top:8px;">No stalls listed</a-typography-text>
+    </div>
   </a-card>
 </template>
 
 <script setup>
-defineProps({
-  cafeteria: {
-    type: Object,
-    required: true
-  }
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+const props = defineProps({
+  cafeteria: { type: Object, required: true }
 })
+
+const emit = defineEmits(['hover', 'leave'])
+const hover = ref(false)
+const hasMerchants = computed(() => Array.isArray(props.cafeteria.merchants) && props.cafeteria.merchants.length > 0)
+
+const router = useRouter()
+const goDetail = () => router.push({ name: 'CafeteriaDetail', params: { id: props.cafeteria.id } })
+
+const handleEnter = () => { hover.value = true; emit('hover', props.cafeteria.id) }
+const handleLeave = () => { hover.value = false; emit('leave') }
+
+const cardStyle = { borderRadius: '16px', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.03)', cursor: 'pointer', transition: 'all 0.2s ease' }
+const imageBox = { position: 'relative', height: '160px', borderRadius: '12px', overflow: 'hidden', background: '#f1f5f9' }
+const imageStyle = { position: 'absolute', inset: 0, backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: `url(${(props.cafeteria.image)})` }
+const openTag = { position: 'absolute', top: '8px', right: '8px' }
+const distanceTag = { position: 'absolute', bottom: '8px', left: '8px' }
 </script>
 
 <style scoped>
-.cafeteria-card {
-  cursor: pointer;
-}
-
-.cafeteria-image {
-  border-radius: var(--border-radius-md);
-  height: 120px;
-  background-size: cover;
-  background-position: center;
-}
-
-.cafeteria-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 100%;
-}
-
-.cafeteria-name {
-  margin: 0 0 var(--space-xs) 0 !important;
-  color: var(--text-color-primary) !important;
-  font-weight: 600 !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cafeteria-meta {
-  font-size: 12px;
-  color: var(--text-color-secondary);
-  margin-bottom: var(--space-sm);
-}
-
-.rating-section {
-  display: flex;
-  align-items: center;
-  margin-bottom: var(--space-md);
-}
-
-.rating-stars {
-  font-size: 14px !important;
-  margin-right: var(--space-sm);
-}
-
-.rating-text {
-  color: var(--secondary-color);
-  font-size: 14px;
-}
-
-.reviews-text {
-  font-size: 12px;
-  margin-left: var(--space-sm);
-}
-
-.stalls-list {
-  width: 100%;
-}
-
-.stall-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-}
-
-.stall-name {
-  color: var(--text-color-primary);
-}
-
-.stall-cuisine {
-  margin-left: var(--space-sm);
-}
-
-.stall-rating {
-  color: var(--secondary-color);
-  margin-right: var(--space-sm);
-}
-
-.more-stalls {
-  font-size: 11px;
-  color: var(--text-color-secondary);
-}
+.card-hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important; }
 </style>

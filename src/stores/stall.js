@@ -1,21 +1,22 @@
 import { defineStore } from 'pinia';
-import { getStalls } from '@/services/stallService';
+import { getStallsByCafeteriaId } from '@/services/stallService';
 
 export const useStallStore = defineStore('stall', {
   state: () => ({
-    stalls: [],
+    stallsByCafeteria: {}, // Store stalls keyed by cafeteria ID
     loading: false,
     error: null,
   }),
   actions: {
-    async fetchStalls() {
+    async fetchStallsByCafeteriaId(cafeteriaId) {
+      if (!cafeteriaId) return;
       this.loading = true;
       this.error = null;
       try {
-        const response = await getStalls();
-        this.stalls = response.data;
+        const response = await getStallsByCafeteriaId(cafeteriaId);
+        this.stallsByCafeteria[cafeteriaId] = response.data;
       } catch (err) {
-        this.error = err.message || 'Failed to fetch stalls';
+        this.error = err.message || `Failed to fetch stalls for cafeteria ${cafeteriaId}`;
       } finally {
         this.loading = false;
       }
