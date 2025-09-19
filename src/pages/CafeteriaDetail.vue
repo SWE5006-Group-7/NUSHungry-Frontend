@@ -6,7 +6,10 @@
       <div style="max-width: 1200px; margin: 0 auto;">
         <a-button type="link" @click="goBack" style="padding-left: 0">← Back to Map</a-button>
 
-        <a-row :gutter="[24, 24]">
+        <div v-if="loading">Loading...</div>
+        <div v-if="error">Error: {{ error }}</div>
+
+        <a-row v-if="cafeteria" :gutter="[24, 24]">
           <!-- Left: Photos & Info -->
           <a-col :xs="24" :lg="14">
             <a-card :body-style="{ padding: '16px' }" :style="cardStyle">
@@ -20,14 +23,14 @@
                 :style="{
                   borderRadius: '12px',
                   height: '320px',
-                  backgroundImage: `url(${cafeteria.hero})`,
+                  backgroundImage: `url(${cafeteria.imageUrl || 'default-image.jpg'})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   position: 'relative'
                 }"
               >
-                <a-tag v-if="cafeteria.isOpen" color="green" style="position:absolute; top: 12px; right: 12px">Open Now</a-tag>
-                <a-tag v-else color="default" style="position:absolute; top: 12px; right: 12px">Closed</a-tag>
+                <!-- isOpen status is not available from backend yet -->
+                <a-tag color="green" style="position:absolute; top: 12px; right: 12px">Open Now</a-tag>
               </div>
 
               <div style="padding: 16px 8px 0 8px;">
@@ -35,17 +38,19 @@
                 <a-space style="margin-top: 8px;" wrap>
                   <a-typography-text type="secondary">
                     <template #default>
-                      <span style="margin-right:12px;">{{ cafeteria.hours }}</span>
-                      <span style="margin-right:12px;">⟂ {{ cafeteria.distanceKm.toFixed(1) }} km</span>
-                      <a-rate :value="cafeteria.rating" disabled style="font-size: 14px; margin-right:6px"/>
-                      <strong style="color:#f7931e">{{ cafeteria.rating }}</strong>
-                      <span style="color:#64748b"> · {{ cafeteria.reviews }} reviews</span>
+                      <span style="margin-right:12px;">{{ cafeteria.termTimeOpeningHours }}</span>
+                      <!-- distanceKm, rating, reviews are not available from backend yet -->
+                      <span style="margin-right:12px;">⟂ 1.0 km</span>
+                      <a-rate :value="4.5" disabled style="font-size: 14px; margin-right:6px"/>
+                      <strong style="color:#f7931e">4.5</strong>
+                      <span style="color:#64748b"> · 50 reviews</span>
                     </template>
                   </a-typography-text>
                 </a-space>
                 <div style="margin-top:8px;">
                   <a-space>
-                    <a-tag v-for="(c, i) in cafeteria.cuisines" :key="i">{{ c }}</a-tag>
+                    <!-- cuisines are not available from backend yet -->
+                    <a-tag>Various</a-tag>
                   </a-space>
                 </div>
               </div>
@@ -67,27 +72,28 @@
               </template>
 
               <a-typography-title :level="5">Location</a-typography-title>
-              <MapSection :markers="[{ lat: cafeteria.lat, lng: cafeteria.lng, label: cafeteria.name }]" height="220px" />
+              <MapSection :markers="[{ lat: cafeteria.latitude, lng: cafeteria.longitude, label: cafeteria.name }]" height="220px" />
             </a-card>
 
             <a-card :style="cardStyle" style="margin-top: 16px;" :body-style="{ padding: '16px' }">
               <a-typography-title :level="5">Food Stalls</a-typography-title>
-              <a-list :data-source="stallsInCafeteria" item-layout="horizontal">
+              <a-list :data-source="cafeteria.stalls" item-layout="horizontal">
                 <template #renderItem="{ item }">
                   <a-list-item :style="{ padding: '12px 0' }" @click="goStall(item.id)">
                     <a-list-item-meta>
                       <template #avatar>
-                        <a-avatar :src="item.hero" shape="square" :size="64" />
+                        <a-avatar :src="item.imageUrl" shape="square" :size="64" />
                       </template>
                       <template #title>
                         <a-typography-text strong>{{ item.name }}</a-typography-text>
                       </template>
                       <template #description>
                         <a-space>
-                          <a-tag>{{ item.cuisine }}</a-tag>
-                          <a-rate :value="item.rating" disabled style="font-size: 12px"/>
-                          <a-typography-text strong style="color:#f7931e">{{ item.rating }}</a-typography-text>
-                          <a-typography-text type="secondary">· {{ item.reviews }} reviews</a-typography-text>
+                          <a-tag>{{ item.cuisineType }}</a-tag>
+                          <!-- rating and reviews are not available from backend yet -->
+                          <a-rate :value="4.2" disabled style="font-size: 12px"/>
+                          <a-typography-text strong style="color:#f7931e">4.2</a-typography-text>
+                          <a-typography-text type="secondary">· 30 reviews</a-typography-text>
                         </a-space>
                       </template>
                     </a-list-item-meta>
@@ -104,17 +110,21 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useCafeteriaStore } from '@/stores/cafeteria'
+import { storeToRefs } from 'pinia'
 import Header from '@/components/Header.vue'
 import MapSection from '@/components/MapSection.vue'
-import { getCafeteriaById, getStallsByCafeteria } from '@/mock/data'
 
 const route = useRoute()
 const router = useRouter()
+const cafeteriaStore = useCafeteriaStore()
+const { currentCafeteria: cafeteria, loading, error } = storeToRefs(cafeteriaStore)
 
-const cafeteria = computed(() => getCafeteriaById(route.params.id))
-const stallsInCafeteria = computed(() => getStallsByCafeteria(route.params.id))
+onMounted(() => {
+  cafeteriaStore.fetchCafeteriaById(route.params.id)
+})
 
 const goBack = () => router.back()
 const goStall = (id) => router.push({ name: 'StallDetail', params: { id } })
