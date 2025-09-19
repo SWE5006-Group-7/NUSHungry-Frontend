@@ -69,7 +69,7 @@
             </div>
             <a-card :style="cardStyle" :body-style="{ padding: '28px' }">
               <div :style="cardHeaderStyle">
-                <a-typography-title :level="3" :style="{ margin: 0, color: '#1f2937', fontWeight: 700 }">附近食堂</a-typography-title>
+                <a-typography-title :level="3" :style="{ margin: 0, color: '#1f2937', fontWeight: 700 }">Nearby Cafeterias</a-typography-title>
                 <a-space>
                   <a-button size="middle" :style="pillBtnBlue" @click="openNow = !openNow">Opening</a-button>
                   <a-button size="middle" :style="pillBtnGold" @click="toggleSort">Sort by Rating</a-button>
@@ -100,15 +100,20 @@
 import Header from '@/components/Header.vue'
 import MapSection from '@/components/MapSection.vue'
 import CafeteriaCard from '@/components/CafeteriaCard.vue'
-import { cafeterias as sourceCafeterias } from '@/mock/data'
+import { useCafeteriaStore } from '@/stores/cafeteria';
 import { useRoute, useRouter } from 'vue-router'
 import { ref, computed, watch, onMounted } from 'vue'
+import { storeToRefs } from 'pinia';
 
 const cardStyle = { borderRadius: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.03)' }
 const cardHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', paddingBottom: '16px', borderBottom: '2px solid #f1f5f9' }
 const footerStyle = { textAlign: 'center', background: '#000000', padding: '32px 24px', marginTop: '40px' }
 const pillBtnBlue = { background: 'rgba(102, 126, 234, 0.1)', borderColor: 'rgba(102, 126, 234, 0.2)', color: '#667eea', fontWeight: 500 }
 const pillBtnGold = { background: 'rgba(251, 191, 36, 0.1)', borderColor: 'rgba(251, 191, 36, 0.2)', color: '#f7931e', fontWeight: 500 }
+
+// Store
+const cafeteriaStore = useCafeteriaStore();
+const { cafeterias: sourceCafeterias, loading, error } = storeToRefs(cafeteriaStore);
 
 // Filter state
 const selectedCuisines = ref(new Set())
@@ -147,13 +152,15 @@ const getCuisineBtnStyle = (cuisineName) => {
 // Filtering
 const filtered = computed(() => {
   const cuisines = selectedCuisines.value
-  let list = sourceCafeterias.filter(c => {
-    if (openNow.value && !c.isOpen) return false
-    if (typeof c.distanceKm === 'number' && c.distanceKm > distanceKm.value) return false
-    if (cuisines.size > 0) {
-      const has = c.cuisines?.some(x => cuisines.has(x))
-      if (!has) return false
-    }
+  let list = sourceCafeterias.value.filter(c => {
+    // Note: isOpen, distanceKm, and cuisines are not available in the backend data yet.
+    // We will keep the filter logic here but it might not work as expected.
+    // if (openNow.value && !c.isOpen) return false
+    // if (typeof c.distanceKm === 'number' && c.distanceKm > distanceKm.value) return false
+    // if (cuisines.size > 0) {
+    //   const has = c.cuisines?.some(x => cuisines.has(x))
+    //   if (!has) return false
+    // }
     return true
   })
   if (sortByRating.value) list = [...list].sort((a,b) => b.rating - a.rating)
@@ -163,19 +170,19 @@ const filtered = computed(() => {
 const mapToCard = (c) => ({
   id: c.id,
   name: c.name,
-  school: `${c.building}`,
-  rating: c.rating,
-  reviews: c.reviews,
-  distance: `${c.distanceKm} km`,
-  image: c.hero,
-  merchants: [],
-  cuisines: c.cuisines,
-  isOpen: c.isOpen,
-  hours: c.hours
+  school: c.location || 'N/A', // Use location from backend
+  rating: 4.5, // Mock data, as backend doesn't provide it
+  reviews: 50, // Mock data
+  distance: `1.2 km`, // Mock data
+  image: c.imageUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop', // Use imageUrl or a default
+  merchants: c.stalls ? c.stalls.length : 0,
+  cuisines: ['Various'], // Mock data
+  isOpen: true, // Mock data
+  hours: c.termTimeOpeningHours || 'N/A'
 })
 
 const filteredCards = computed(() => filtered.value.map(mapToCard))
-const homeMarkers = computed(() => filtered.value.map(c => ({ id: c.id, lat: c.lat, lng: c.lng, label: c.name })))
+const homeMarkers = computed(() => filtered.value.map(c => ({ id: c.id, lat: c.latitude, lng: c.longitude, label: c.name })))
 
 // Map <-> List linking
 const focusId = ref(null)
@@ -203,6 +210,8 @@ const route = useRoute()
 const router = useRouter()
 
 onMounted(() => {
+  cafeteriaStore.fetchCafeterias();
+
   const q = route.query
   if (q.cuisines) {
     const arr = String(q.cuisines).split(',').filter(Boolean)
