@@ -100,10 +100,10 @@
 import Header from '@/components/Header.vue'
 import MapSection from '@/components/MapSection.vue'
 import CafeteriaCard from '@/components/CafeteriaCard.vue'
-import { useCafeteriaStore } from '@/stores/cafeteria'
+import { useCafeteriaStore } from '@/stores/cafeteria';
 import { useRoute, useRouter } from 'vue-router'
 import { ref, computed, watch, onMounted } from 'vue'
-import { storeToRefs } from 'pinia'
+import { storeToRefs } from 'pinia';
 
 const cardStyle = { borderRadius: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.03)' }
 const cardHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', paddingBottom: '16px', borderBottom: '2px solid #f1f5f9' }
@@ -111,40 +111,78 @@ const footerStyle = { textAlign: 'center', background: '#000000', padding: '32px
 const pillBtnBlue = { background: 'rgba(102, 126, 234, 0.1)', borderColor: 'rgba(102, 126, 234, 0.2)', color: '#667eea', fontWeight: 500 }
 const pillBtnGold = { background: 'rgba(251, 191, 36, 0.1)', borderColor: 'rgba(251, 191, 36, 0.2)', color: '#f7931e', fontWeight: 500 }
 
-const cafeteriaStore = useCafeteriaStore()
-const { cafeterias, loading, error } = storeToRefs(cafeteriaStore)
+// Store
+const cafeteriaStore = useCafeteriaStore();
+const { cafeterias: sourceCafeterias, loading, error } = storeToRefs(cafeteriaStore);
 
 // Filter state
+const selectedCuisines = ref(new Set())
 const openNow = ref(false)
-// NOTE: Filtering by distance, price, rating, and cuisine is temporarily disabled
-// as the backend data structure has changed. These features can be re-implemented later.
+const distanceKm = ref(2.0)
+const priceRange = ref([0, 50])
+const sortByRating = ref(false)
+
+// Options
+const cuisineCats = [
+  { name: 'Chinese', icon: '🥡', },
+  { name: 'Indian', icon: '🍛' },
+  { name: 'Malay', icon: '🍜' },
+  { name: 'Western', icon: '🍔' },
+  { name: 'Japanese', icon: '🍣' },
+  { name: 'Korean', icon: '🍲' },
+
+]
+const catBtn = { background: '#f8fafc', borderColor: '#eef2f7', borderRadius: '10px', fontWeight: 500 }
+
+const getCuisineBtnStyle = (cuisineName) => {
+  const isSelected = selectedCuisines.value.has(cuisineName)
+  return {
+    background: isSelected ? '#667eea' : '#f8fafc',
+    borderColor: isSelected ? '#667eea' : '#eef2f7',
+    borderRadius: '10px',
+    fontWeight: 500,
+    padding: '12px 8px',
+    height: 'auto',
+    minHeight: '80px',
+    transition: 'all 0.2s ease',
+    color: isSelected ? '#ffffff' : '#374151'
+  }
+}
 
 // Filtering
 const filtered = computed(() => {
-  // Basic filtering for now
-  return cafeterias.value.filter(c => {
-    // A simple check for 'open' status can be implemented if the API provides it.
-    // For now, we just return the list.
+  const cuisines = selectedCuisines.value
+  let list = sourceCafeterias.value.filter(c => {
+    // Note: isOpen, distanceKm, and cuisines are not available in the backend data yet.
+    // We will keep the filter logic here but it might not work as expected.
+    // if (openNow.value && !c.isOpen) return false
+    // if (typeof c.distanceKm === 'number' && c.distanceKm > distanceKm.value) return false
+    // if (cuisines.size > 0) {
+    //   const has = c.cuisines?.some(x => cuisines.has(x))
+    //   if (!has) return false
+    // }
     return true
   })
+  if (sortByRating.value) list = [...list].sort((a,b) => b.rating - a.rating)
+  return list
 })
 
 const mapToCard = (c) => ({
   id: c.id,
   name: c.name,
-  school: c.location, // Use 'location' from backend
-  rating: 0, // Placeholder
-  reviews: 0, // Placeholder
-  distance: 'N/A', // Placeholder
-  image: c.imageUrl, // Use 'imageUrl' from backend
-  merchants: [], // This can be populated later
-  cuisines: [], // This can be populated later
-  isOpen: true, // Placeholder, needs logic based on opening hours
-  hours: c.termTimeOpeningHours // Use 'termTimeOpeningHours'
+  school: c.location || 'N/A', // Use location from backend
+  rating: 4.5, // Mock data, as backend doesn't provide it
+  reviews: 50, // Mock data
+  distance: `1.2 km`, // Mock data
+  image: c.imageUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop', // Use imageUrl or a default
+  merchants: c.stalls ? c.stalls.length : 0,
+  cuisines: ['Various'], // Mock data
+  isOpen: true, // Mock data
+  hours: c.termTimeOpeningHours || 'N/A'
 })
 
 const filteredCards = computed(() => filtered.value.map(mapToCard))
-const homeMarkers = computed(() => filtered.value.map(c => ({ id: c.id, lat: c.lat, lng: c.lng, label: c.name })))
+const homeMarkers = computed(() => filtered.value.map(c => ({ id: c.id, lat: c.latitude, lng: c.longitude, label: c.name })))
 
 // Map <-> List linking
 const focusId = ref(null)
@@ -160,18 +198,40 @@ const focusAndScroll = (m) => {
 }
 
 // Handlers
-const toggleSort = () => { /* Sorting logic to be re-implemented */ }
+const toggleCuisine = (name) => {
+  const s = selectedCuisines.value
+  if (s.has(name)) s.delete(name); else s.add(name)
+  selectedCuisines.value = new Set(s)
+}
+const toggleSort = () => { sortByRating.value = !sortByRating.value }
 
 // URL sync
 const route = useRoute()
 const router = useRouter()
 
 onMounted(() => {
-  cafeteriaStore.fetchCafeterias()
-  // Logic to sync with URL params can be re-added here later
+  cafeteriaStore.fetchCafeterias();
+
+  const q = route.query
+  if (q.cuisines) {
+    const arr = String(q.cuisines).split(',').filter(Boolean)
+    selectedCuisines.value = new Set(arr)
+  }
+  if (q.open) openNow.value = q.open === '1'
+  if (q.dist) distanceKm.value = Math.min(2, Math.max(0, Number(q.dist)))
+  if (q.sort === 'rating') sortByRating.value = true
 })
 
-// Watcher for URL sync can be re-added here later
+watch([selectedCuisines, openNow, distanceKm, sortByRating], () => {
+  const cuisines = Array.from(selectedCuisines.value)
+  const query = {
+    ...(cuisines.length ? { cuisines: cuisines.join(',') } : {}),
+    ...(openNow.value ? { open: '1' } : {}),
+    ...(distanceKm.value !== 2 ? { dist: String(distanceKm.value.toFixed(1)) } : {}),
+    ...(sortByRating.value ? { sort: 'rating' } : {})
+  }
+  router.replace({ query })
+}, { deep: true })
 </script>
 
 <style scoped>

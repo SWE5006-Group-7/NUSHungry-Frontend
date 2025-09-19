@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia';
-import { getCafeterias, getPopularCafeterias } from '@/services/cafeteriaService';
+import { getCafeterias, getCafeteriaById } from '@/services/cafeteriaService';
 
 export const useCafeteriaStore = defineStore('cafeteria', {
   state: () => ({
     cafeterias: [],
-    popularCafeterias: [],
+    currentCafeteria: null,
     loading: false,
     error: null,
   }),
@@ -21,14 +21,16 @@ export const useCafeteriaStore = defineStore('cafeteria', {
         this.loading = false;
       }
     },
-    async fetchPopularCafeterias() {
+    async fetchCafeteriaById(id) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await getPopularCafeterias();
-        this.popularCafeterias = response.data;
+        const response = await getCafeteriaById(id);
+        this.currentCafeteria = response.data;
+        return this.currentCafeteria;
       } catch (err) {
-        this.error = err.message || 'Failed to fetch popular cafeterias';
+        this.error = err.message || `Failed to fetch cafeteria with id ${id}`;
+        this.currentCafeteria = null;
       } finally {
         this.loading = false;
       }

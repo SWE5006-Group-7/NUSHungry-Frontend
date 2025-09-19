@@ -7,3 +7,7 @@ export const getCafeterias = () => {
 export const getPopularCafeterias = () => {
   return apiClient.get('/api/cafeterias/popular');
 };
+
+export const getCafeteriaById = (id) => {
+  return apiClient.get(`/api/cafeterias/${id}`);
+};
