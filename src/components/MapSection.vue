@@ -1,6 +1,12 @@
 <template>
   <div :style="wrapperStyle">
     <div ref="mapEl" class="leaflet-host" :style="{ height, borderRadius: '20px' }"></div>
+    <button v-if="userLocation" @click="returnToUserLocation" class="location-btn" title="Return to my location">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    </button>
   </div>
 </template>
 
@@ -19,9 +25,11 @@ const props = defineProps({
 const emit = defineEmits(['marker-click'])
 
 const mapEl = ref(null)
+const userLocation = ref(null)
 let map
 let layerGroup
 let markerById = new Map()
+let userMarker = null
 
 onMounted(() => {
   map = L.map(mapEl.value, { zoomControl: false })
@@ -33,6 +41,7 @@ onMounted(() => {
 
   layerGroup = L.layerGroup().addTo(map)
   renderMarkers()
+  getUserLocation()
 })
 
 onBeforeUnmount(() => {
@@ -69,6 +78,49 @@ function renderMarkers() {
   }
 }
 
+function getUserLocation() {
+  if (!navigator.geolocation) {
+    console.warn('Geolocation is not supported by this browser')
+    return
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords
+      userLocation.value = { lat: latitude, lng: longitude }
+
+      // 创建用户位置标记
+      const userIcon = L.divIcon({
+        className: 'user-location-marker',
+        html: '<div class="user-location-pulse"></div>',
+        iconSize: [20, 20]
+      })
+
+      if (userMarker) {
+        userMarker.setLatLng([latitude, longitude])
+      } else {
+        userMarker = L.marker([latitude, longitude], { icon: userIcon })
+          .bindTooltip('Your Location')
+          .addTo(map)
+      }
+    },
+    (error) => {
+      console.warn('Error getting user location:', error.message)
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0
+    }
+  )
+}
+
+function returnToUserLocation() {
+  if (userLocation.value && map) {
+    map.setView([userLocation.value.lat, userLocation.value.lng], 16, { animate: true })
+  }
+}
+
 const wrapperStyle = {
   background: 'white',
   borderRadius: '20px',
@@ -94,4 +146,59 @@ const wrapperStyle = {
   z-index: 0;
 }
 
+.location-btn {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.location-btn:hover {
+  background: #f7931e;
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(247, 147, 30, 0.3);
+}
+
+.location-btn:active {
+  transform: scale(0.95);
+}
+
+:deep(.user-location-marker) {
+  background: transparent;
+  border: none;
+}
+
+:deep(.user-location-pulse) {
+  width: 20px;
+  height: 20px;
+  background: #4285f4;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.4);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(66, 133, 244, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(66, 133, 244, 0);
+  }
+}
 </style>
