@@ -58,7 +58,38 @@
 
             <a-card :style="cardStyle" style="margin-top: 16px;" :body-style="{ padding: '16px' }">
               <a-typography-title :level="5" style="margin-top:0">Photos from Visitors</a-typography-title>
-              <a-typography-text type="secondary">Scroll to see more photos</a-typography-text>
+
+              <!-- 图片上传 -->
+              <a-upload
+                :before-upload="beforeUpload"
+                :custom-request="handleUploadCafeteriaImage"
+                :show-upload-list="false"
+                accept="image/*"
+              >
+                <a-button type="primary" style="margin-bottom: 16px;">
+                  <template #icon><UploadOutlined /></template>
+                  Upload Photo
+                </a-button>
+              </a-upload>
+
+              <!-- 图片展示 -->
+              <div v-if="customerImages.length > 0" style="display: flex; gap: 12px; overflow-x: auto; padding: 8px 0;">
+                <div
+                  v-for="img in customerImages"
+                  :key="img.id"
+                  :style="{
+                    minWidth: '150px',
+                    height: '150px',
+                    borderRadius: '8px',
+                    backgroundImage: `url(http://localhost:8080${img.imageUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    cursor: 'pointer'
+                  }"
+                  @click="previewImage(img.imageUrl)"
+                />
+              </div>
+              <a-typography-text v-else type="secondary">No photos yet. Be the first to share!</a-typography-text>
             </a-card>
           </a-col>
 
@@ -71,7 +102,12 @@
                 </a-space>
               </template>
 
-              <a-typography-title :level="5">Location</a-typography-title>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <a-typography-title :level="5" style="margin: 0;">Location</a-typography-title>
+                <a-button type="primary" @click="openNavigation" size="small" style="border-radius: 6px;">
+                  🧭 Navigate
+                </a-button>
+              </div>
               <MapSection :markers="[{ lat: cafeteria.latitude, lng: cafeteria.longitude, label: cafeteria.name }]" height="220px" />
             </a-card>
 
@@ -110,17 +146,22 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCafeteriaStore } from '@/stores/cafeteria'
 import { storeToRefs } from 'pinia'
+import { message } from 'ant-design-vue'
+import { UploadOutlined } from '@ant-design/icons-vue'
 import Header from '@/components/Header.vue'
 import MapSection from '@/components/MapSection.vue'
+import { imageService } from '@/services/imageService'
 
 const route = useRoute()
 const router = useRouter()
 const cafeteriaStore = useCafeteriaStore()
 const { currentCafeteria: cafeteria, loading, error } = storeToRefs(cafeteriaStore)
+
+const customerImages = computed(() => cafeteria.value?.images || [])
 
 onMounted(() => {
   cafeteriaStore.fetchCafeteriaById(route.params.id)
@@ -128,6 +169,64 @@ onMounted(() => {
 
 const goBack = () => router.back()
 const goStall = (id) => router.push({ name: 'StallDetail', params: { id } })
+
+// 图片上传
+const beforeUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    message.error('You can only upload image files!')
+    return false
+  }
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    message.error('Image must be smaller than 5MB!')
+    return false
+  }
+  return true
+}
+
+const handleUploadCafeteriaImage = async ({ file }) => {
+  try {
+    // 这里使用临时用户ID，实际应该从认证系统获取
+    const userId = 'guest-' + Date.now()
+    await imageService.uploadCafeteriaImage(route.params.id, file, userId)
+    message.success('Image uploaded successfully!')
+    // 重新加载数据
+    cafeteriaStore.fetchCafeteriaById(route.params.id)
+  } catch (error) {
+    message.error('Failed to upload image')
+    console.error(error)
+  }
+}
+
+const previewImage = (imageUrl) => {
+  window.open(`http://localhost:8080${imageUrl}`, '_blank')
+}
+
+// 导航功能
+const openNavigation = () => {
+  if (!cafeteria.value) return
+
+  const lat = cafeteria.value.latitude
+  const lng = cafeteria.value.longitude
+  const label = encodeURIComponent(cafeteria.value.name)
+
+  // 检测用户设备/浏览器，打开相应的地图应用
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera
+
+  // iOS 设备
+  if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+    window.open(`maps://maps.apple.com/?q=${label}&ll=${lat},${lng}`)
+  }
+  // Android 设备
+  else if (/android/i.test(userAgent)) {
+    window.open(`geo:${lat},${lng}?q=${lat},${lng}(${label})`)
+  }
+  // 桌面端，使用 Google Maps
+  else {
+    window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank')
+  }
+}
 
 const cardStyle = {
   borderRadius: '16px',
