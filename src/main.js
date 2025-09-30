@@ -7,6 +7,7 @@ import 'ant-design-vue/dist/reset.css'
 import './style.css'
 
 const app = createApp(App)
+const pinia = createPinia() 
 
 app.use(router)
 app.use(pinia)
