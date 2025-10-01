@@ -2,135 +2,161 @@
   <div class="settings-container">
     <Header />
     <div class="settings-content">
-      <a-card class="settings-card" title="设置">
-        <a-tabs v-model:activeKey="activeTab">
-          <!-- 个人信息 -->
-          <a-tab-pane key="profile" tab="个人信息">
-            <a-form
-              :model="profileForm"
-              :rules="profileRules"
-              layout="vertical"
-              @finish="handleUpdateProfile"
-            >
-              <a-form-item label="用户名" name="username">
-                <a-input
-                  v-model:value="profileForm.username"
-                  placeholder="用户名"
-                  disabled
-                  size="large"
-                >
-                  <template #prefix>
-                    <UserOutlined />
-                  </template>
-                </a-input>
-              </a-form-item>
+      <!-- 页面标题 -->
+      <div class="page-header">
+        <h1 class="page-title">
+          <SettingOutlined class="title-icon" />
+          设置
+        </h1>
+        <p class="page-description">管理您的账户设置和偏好</p>
+      </div>
 
-              <a-form-item label="邮箱" name="email">
-                <a-input
-                  v-model:value="profileForm.email"
-                  placeholder="邮箱"
-                  size="large"
-                  type="email"
-                >
-                  <template #prefix>
-                    <MailOutlined />
-                  </template>
-                </a-input>
-              </a-form-item>
+      <!-- 设置卡片 -->
+      <div class="settings-cards">
+        <!-- 个人信息卡片 -->
+        <a-card class="setting-card" :hoverable="false">
+          <template #title>
+            <div class="card-title">
+              <UserOutlined class="card-icon" />
+              <span>个人信息</span>
+            </div>
+          </template>
+          <a-form
+            :model="profileForm"
+            :rules="profileRules"
+            layout="vertical"
+            @finish="handleUpdateProfile"
+          >
+            <a-form-item label="用户名" name="username">
+              <a-input
+                v-model:value="profileForm.username"
+                placeholder="用户名"
+                disabled
+                size="large"
+              >
+                <template #prefix>
+                  <UserOutlined style="color: rgba(0, 0, 0, 0.45)" />
+                </template>
+              </a-input>
+            </a-form-item>
 
-              <a-form-item>
-                <a-button
-                  type="primary"
-                  html-type="submit"
-                  size="large"
-                  :loading="loadingProfile"
-                >
-                  保存修改
-                </a-button>
-              </a-form-item>
-            </a-form>
-          </a-tab-pane>
+            <a-form-item label="邮箱" name="email">
+              <a-input
+                v-model:value="profileForm.email"
+                placeholder="邮箱"
+                size="large"
+                type="email"
+              >
+                <template #prefix>
+                  <MailOutlined style="color: rgba(0, 0, 0, 0.45)" />
+                </template>
+              </a-input>
+            </a-form-item>
 
-          <!-- 修改密码 -->
-          <a-tab-pane key="password" tab="修改密码">
-            <a-form
-              :model="passwordForm"
-              :rules="passwordRules"
-              layout="vertical"
-              @finish="handleChangePassword"
-            >
-              <a-form-item label="当前密码" name="currentPassword">
-                <a-input-password
-                  v-model:value="passwordForm.currentPassword"
-                  placeholder="请输入当前密码"
-                  size="large"
-                >
-                  <template #prefix>
-                    <LockOutlined />
-                  </template>
-                </a-input-password>
-              </a-form-item>
-
-              <a-form-item label="新密码" name="newPassword">
-                <a-input-password
-                  v-model:value="passwordForm.newPassword"
-                  placeholder="请输入新密码 (至少6个字符)"
-                  size="large"
-                >
-                  <template #prefix>
-                    <LockOutlined />
-                  </template>
-                </a-input-password>
-              </a-form-item>
-
-              <a-form-item label="确认新密码" name="confirmPassword">
-                <a-input-password
-                  v-model:value="passwordForm.confirmPassword"
-                  placeholder="请再次输入新密码"
-                  size="large"
-                >
-                  <template #prefix>
-                    <LockOutlined />
-                  </template>
-                </a-input-password>
-              </a-form-item>
-
-              <a-form-item>
-                <a-button
-                  type="primary"
-                  html-type="submit"
-                  size="large"
-                  :loading="loadingPassword"
-                >
-                  修改密码
-                </a-button>
-              </a-form-item>
-            </a-form>
-          </a-tab-pane>
-
-          <!-- 账户管理 -->
-          <a-tab-pane key="account" tab="账户管理">
-            <div class="account-section">
-              <a-alert
-                message="退出登录"
-                description="退出登录后,您将返回到登录页面"
-                type="info"
-                show-icon
-                style="margin-bottom: 24px"
-              />
+            <a-form-item style="margin-bottom: 0">
               <a-button
                 type="primary"
-                danger
+                html-type="submit"
                 size="large"
-                @click="handleLogout"
+                :loading="loadingProfile"
+                block
               >
-                <LogoutOutlined />
-                退出登录
+                保存修改
               </a-button>
+            </a-form-item>
+          </a-form>
+        </a-card>
+
+        <!-- 修改密码卡片 -->
+        <a-card class="setting-card" :hoverable="false">
+          <template #title>
+            <div class="card-title">
+              <LockOutlined class="card-icon" />
+              <span>修改密码</span>
             </div>
-          </a-tab-pane>
-        </a-tabs>
-      </a-card>
+          </template>
+          <a-form
+            :model="passwordForm"
+            :rules="passwordRules"
+            layout="vertical"
+            @finish="handleChangePassword"
+          >
+            <a-form-item label="当前密码" name="currentPassword">
+              <a-input-password
+                v-model:value="passwordForm.currentPassword"
+                placeholder="请输入当前密码"
+                size="large"
+              >
+                <template #prefix>
+                  <LockOutlined style="color: rgba(0, 0, 0, 0.45)" />
+                </template>
+              </a-input-password>
+            </a-form-item>
+
+            <a-form-item label="新密码" name="newPassword">
+              <a-input-password
+                v-model:value="passwordForm.newPassword"
+                placeholder="请输入新密码 (至少6个字符)"
+                size="large"
+              >
+                <template #prefix>
+                  <LockOutlined style="color: rgba(0, 0, 0, 0.45)" />
+                </template>
+              </a-input-password>
+            </a-form-item>
+
+            <a-form-item label="确认新密码" name="confirmPassword">
+              <a-input-password
+                v-model:value="passwordForm.confirmPassword"
+                placeholder="请再次输入新密码"
+                size="large"
+              >
+                <template #prefix>
+                  <LockOutlined style="color: rgba(0, 0, 0, 0.45)" />
+                </template>
+              </a-input-password>
+            </a-form-item>
+
+            <a-form-item style="margin-bottom: 0">
+              <a-button
+                type="primary"
+                html-type="submit"
+                size="large"
+                :loading="loadingPassword"
+                block
+              >
+                修改密码
+              </a-button>
+            </a-form-item>
+          </a-form>
+        </a-card>
+
+        <!-- 账户管理卡片 -->
+        <a-card class="setting-card danger-card" :hoverable="false">
+          <template #title>
+            <div class="card-title">
+              <LogoutOutlined class="card-icon" />
+              <span>账户管理</span>
+            </div>
+          </template>
+          <div class="account-section">
+            <div class="logout-info">
+              <p class="logout-title">退出登录</p>
+              <p class="logout-description">退出登录后，您将返回到登录页面</p>
+            </div>
+            <a-button
+              type="primary"
+              danger
+              size="large"
+              @click="handleLogout"
+              block
+            >
+              <LogoutOutlined />
+              退出登录
+            </a-button>
+          </div>
+        </a-card>
+      </div>
     </div>
   </div>
 </template>
@@ -143,7 +169,8 @@ import {
   UserOutlined,
   MailOutlined,
   LockOutlined,
-  LogoutOutlined
+  LogoutOutlined,
+  SettingOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import Header from '@/components/Header.vue'
@@ -283,25 +310,223 @@ onMounted(() => {
 <style scoped>
 .settings-container {
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background: linear-gradient(to bottom, #fafafa 0%, #f0f0f0 100%);
+  padding-top: 80px;
 }
 
 .settings-content {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 32px 24px;
 }
 
-.settings-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.account-section {
-  padding: 24px;
+/* 页面标题 */
+.page-header {
   text-align: center;
+  margin-bottom: 40px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.5px;
+}
+
+.title-icon {
+  font-size: 36px;
+  color: #374151;
+}
+
+.page-description {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* 设置卡片容器 */
+.settings-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.setting-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.setting-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.danger-card {
+  border-color: #fecaca;
+  background: #ffffff;
+}
+
+.danger-card:hover {
+  border-color: #fca5a5;
+}
+
+/* 卡片标题 */
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.card-icon {
+  font-size: 20px;
+  color: #374151;
+}
+
+.danger-card .card-icon {
+  color: #dc2626;
+}
+
+/* 表单样式优化 */
+:deep(.ant-card-head) {
+  background-color: #fafafa;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 :deep(.ant-form-item-label > label) {
+  font-weight: 600;
+  font-size: 14px;
+  color: #111827;
+}
+
+:deep(.ant-input),
+:deep(.ant-input-password) {
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+:deep(.ant-input:hover),
+:deep(.ant-input-password:hover) {
+  border-color: #9ca3af;
+}
+
+:deep(.ant-input:focus),
+:deep(.ant-input-password .ant-input:focus) {
+  border-color: #111827;
+  box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.08);
+}
+
+:deep(.ant-input-disabled) {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+}
+
+:deep(.ant-btn) {
+  border-radius: 6px;
   font-weight: 500;
+  height: 44px;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+:deep(.ant-btn-primary) {
+  background: #111827;
+  border-color: #111827;
+  color: #ffffff;
+}
+
+:deep(.ant-btn-primary:hover) {
+  background: #1f2937;
+  border-color: #1f2937;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.15);
+}
+
+:deep(.ant-btn-primary:active) {
+  background: #0f1419;
+  border-color: #0f1419;
+  transform: translateY(0);
+}
+
+:deep(.ant-btn-primary.ant-btn-dangerous) {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+:deep(.ant-btn-primary.ant-btn-dangerous:hover) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+
+:deep(.ant-btn-primary.ant-btn-dangerous:active) {
+  background: #991b1b;
+  border-color: #991b1b;
+}
+
+/* 账户管理区域 */
+.account-section {
+  padding: 12px 0;
+}
+
+.logout-info {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #fef2f2;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+}
+
+.logout-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.logout-description {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .settings-content {
+    padding: 24px 16px;
+  }
+
+  .page-title {
+    font-size: 26px;
+  }
+
+  .title-icon {
+    font-size: 28px;
+  }
+
+  .page-description {
+    font-size: 14px;
+  }
+
+  .card-title {
+    font-size: 16px;
+  }
 }
 </style>

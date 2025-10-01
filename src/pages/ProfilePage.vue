@@ -2,102 +2,130 @@
   <div class="profile-container">
     <Header />
     <div class="profile-content">
-      <a-card class="profile-card">
-        <template #title>
-          <div class="profile-header">
-            <UserOutlined class="profile-icon" />
-            <span>{{ userStore.username }}的个人中心</span>
+      <!-- 页面标题 -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="user-info">
+            <a-avatar :size="64" class="user-avatar">
+              <template #icon><UserOutlined /></template>
+            </a-avatar>
+            <div class="user-details">
+              <h1 class="user-name">{{ userStore.username || '用户' }}</h1>
+              <p class="user-email">{{ userStore.user?.email || '' }}</p>
+            </div>
           </div>
-        </template>
+        </div>
+      </div>
 
-        <a-tabs v-model:activeKey="activeTab">
-          <!-- 我的评价 -->
-          <a-tab-pane key="reviews" tab="我的评价">
-            <a-spin :spinning="loadingReviews">
-              <div v-if="reviews.length === 0" class="empty-state">
-                <a-empty description="暂无评价" />
-              </div>
-              <div v-else class="reviews-list">
-                <a-card
-                  v-for="review in reviews"
-                  :key="review.id"
-                  class="review-item"
-                  :title="`评价 ${review.stallName || 'Stall'}`"
-                  size="small"
-                >
-                  <template #extra>
-                    <a-rate :value="review.rating" disabled />
-                  </template>
-                  <p class="review-content">{{ review.comment }}</p>
-                  <div class="review-meta">
-                    <span class="review-date">
-                      <ClockCircleOutlined />
-                      {{ formatDate(review.createdAt) }}
-                    </span>
-                    <a-button
-                      type="link"
-                      danger
-                      size="small"
-                      @click="handleDeleteReview(review.id)"
-                    >
-                      删除
-                    </a-button>
+      <!-- 内容区域容器 -->
+      <div class="content-grid">
+        <!-- 我的评价 -->
+        <div class="content-section">
+          <div class="section-header">
+            <div class="section-icon-box reviews-icon">
+              <StarOutlined class="section-icon" />
+            </div>
+            <h2 class="section-title">我的评价</h2>
+          </div>
+          <a-spin :spinning="loadingReviews">
+            <div v-if="reviews.length === 0" class="empty-state">
+              <a-empty description="暂无评价">
+                <template #image>
+                  <StarOutlined style="font-size: 48px; color: #d9d9d9;" />
+                </template>
+              </a-empty>
+            </div>
+            <div v-else class="reviews-list">
+              <div
+                v-for="review in reviews"
+                :key="review.id"
+                class="review-card"
+              >
+                <div class="review-header">
+                  <div class="review-title">
+                    <ShopOutlined class="review-icon" />
+                    <span class="review-stall">{{ review.stallName || 'Stall' }}</span>
                   </div>
-                </a-card>
-              </div>
-            </a-spin>
-          </a-tab-pane>
-
-          <!-- 我的收藏 -->
-          <a-tab-pane key="favorites" tab="我的收藏">
-            <a-spin :spinning="loadingFavorites">
-              <div v-if="favorites.length === 0" class="empty-state">
-                <a-empty description="暂无收藏" />
-              </div>
-              <div v-else class="favorites-grid">
-                <a-card
-                  v-for="favorite in favorites"
-                  :key="favorite.id"
-                  hoverable
-                  class="favorite-item"
-                  @click="goToStall(favorite.stallId)"
-                >
-                  <template #cover>
-                    <div class="favorite-image">
-                      <img
-                        v-if="favorite.stallImage"
-                        :src="favorite.stallImage"
-                        :alt="favorite.stallName"
-                      />
-                      <div v-else class="placeholder-image">
-                        <ShopOutlined />
-                      </div>
-                    </div>
-                  </template>
-                  <a-card-meta
-                    :title="favorite.stallName"
-                    :description="favorite.cafeteriaName"
+                  <a-rate :value="review.rating" disabled class="review-rating" />
+                </div>
+                <p class="review-content">{{ review.comment }}</p>
+                <div class="review-footer">
+                  <span class="review-date">
+                    <ClockCircleOutlined />
+                    {{ formatDate(review.createdAt) }}
+                  </span>
+                  <a-button
+                    type="text"
+                    danger
+                    size="small"
+                    @click="handleDeleteReview(review.id)"
+                    class="delete-btn"
                   >
-                    <template #avatar>
-                      <HeartFilled class="heart-icon" />
-                    </template>
-                  </a-card-meta>
-                  <div class="favorite-footer">
+                    <DeleteOutlined />
+                    删除
+                  </a-button>
+                </div>
+              </div>
+            </div>
+          </a-spin>
+        </div>
+
+        <!-- 我的收藏 -->
+        <div class="content-section">
+          <div class="section-header">
+            <div class="section-icon-box favorites-icon">
+              <HeartOutlined class="section-icon" />
+            </div>
+            <h2 class="section-title">我的收藏</h2>
+          </div>
+          <a-spin :spinning="loadingFavorites">
+            <div v-if="favorites.length === 0" class="empty-state">
+              <a-empty description="暂无收藏">
+                <template #image>
+                  <HeartOutlined style="font-size: 48px; color: #d9d9d9;" />
+                </template>
+              </a-empty>
+            </div>
+            <div v-else class="favorites-grid">
+              <div
+                v-for="favorite in favorites"
+                :key="favorite.id"
+                class="favorite-card"
+                @click="goToStall(favorite.stallId)"
+              >
+                <div class="favorite-image">
+                  <img
+                    v-if="favorite.stallImage"
+                    :src="favorite.stallImage"
+                    :alt="favorite.stallName"
+                  />
+                  <div v-else class="placeholder-image">
+                    <ShopOutlined />
+                  </div>
+                </div>
+                <div class="favorite-content">
+                  <div class="favorite-header">
+                    <h3 class="favorite-name">{{ favorite.stallName }}</h3>
+                    <HeartFilled class="favorite-icon" />
+                  </div>
+                  <p class="favorite-location">{{ favorite.cafeteriaName }}</p>
+                  <div class="favorite-actions">
                     <a-button
                       type="text"
                       danger
                       size="small"
                       @click.stop="handleRemoveFavorite(favorite.id)"
+                      class="remove-btn"
                     >
                       取消收藏
                     </a-button>
                   </div>
-                </a-card>
+                </div>
               </div>
-            </a-spin>
-          </a-tab-pane>
-        </a-tabs>
-      </a-card>
+            </div>
+          </a-spin>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -109,8 +137,11 @@ import { message } from 'ant-design-vue'
 import {
   UserOutlined,
   HeartFilled,
+  HeartOutlined,
   ShopOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  StarOutlined,
+  DeleteOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import authService from '@/services/authService'
@@ -119,7 +150,6 @@ import Header from '@/components/Header.vue'
 const router = useRouter()
 const userStore = useUserStore()
 
-const activeTab = ref('reviews')
 const reviews = ref([])
 const favorites = ref([])
 const loadingReviews = ref(false)
@@ -190,101 +220,248 @@ onMounted(() => {
 <style scoped>
 .profile-container {
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background: linear-gradient(to bottom, #fafafa 0%, #f0f0f0 100%);
+  padding-top: 80px;
 }
 
 .profile-content {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* 页面标题 */
+.page-header {
+  margin-bottom: 32px;
+}
+
+.header-content {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.user-avatar {
+  background: #111827;
+  font-size: 28px;
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.user-email {
+  font-size: 15px;
+  color: #6b7280;
+  margin: 0;
+}
+
+
+/* 内容区域网格 */
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.content-section {
+  background: #ffffff;
+  border-radius: 8px;
   padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
 }
 
-.profile-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.profile-header {
+.section-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 20px;
-  font-weight: bold;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f3f4f6;
 }
 
-.profile-icon {
+.section-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-icon-box.reviews-icon {
+  background-color: #fef3c7;
+}
+
+.section-icon-box.favorites-icon {
+  background-color: #fee2e2;
+}
+
+.section-icon {
   font-size: 24px;
-  color: #1890ff;
+}
+
+.reviews-icon .section-icon {
+  color: #d97706;
+}
+
+.favorites-icon .section-icon {
+  color: #dc2626;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.3px;
 }
 
 .empty-state {
-  padding: 48px 0;
+  padding: 64px 0;
   text-align: center;
 }
 
-/* 评价列表样式 */
+/* 评价列表 */
 .reviews-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.review-item {
-  border: 1px solid #f0f0f0;
+.review-card {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s ease;
 }
 
-.review-content {
-  margin: 12px 0;
-  color: #666;
-  line-height: 1.6;
+.review-card:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.review-meta {
+.review-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.review-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.review-icon {
+  font-size: 18px;
+  color: #6b7280;
+}
+
+.review-stall {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.review-rating {
+  font-size: 16px;
+}
+
+.review-content {
+  margin: 0 0 16px 0;
+  color: #374151;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.review-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #e5e7eb;
 }
 
 .review-date {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #999;
-  font-size: 14px;
+  color: #9ca3af;
+  font-size: 13px;
 }
 
-/* 收藏网格样式 */
+.delete-btn {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.delete-btn:hover {
+  background-color: #fee2e2;
+}
+
+/* 收藏网格 */
 .favorites-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
-.favorite-item {
+.favorite-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.favorite-item:hover {
+.favorite-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  border-color: #d1d5db;
 }
 
 .favorite-image {
-  height: 200px;
+  height: 180px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f5f5;
+  background-color: #f3f4f6;
 }
 
 .favorite-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.favorite-card:hover .favorite-image img {
+  transform: scale(1.05);
 }
 
 .placeholder-image {
@@ -294,24 +471,89 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   font-size: 48px;
-  color: #d9d9d9;
+  color: #d1d5db;
 }
 
-.heart-icon {
-  color: #ff4d4f;
-  font-size: 20px;
+.favorite-content {
+  padding: 16px;
 }
 
-.favorite-footer {
-  margin-top: 12px;
+.favorite-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 8px;
+}
+
+.favorite-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  flex: 1;
+}
+
+.favorite-icon {
+  color: #dc2626;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.favorite-location {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 12px 0;
+}
+
+.favorite-actions {
   padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #f3f4f6;
   text-align: center;
 }
 
+.remove-btn {
+  color: #dc2626;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.remove-btn:hover {
+  background-color: #fee2e2;
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
+  .profile-content {
+    padding: 24px 16px;
+  }
+
+  .header-content {
+    padding: 24px;
+  }
+
+  .user-info {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .user-name {
+    font-size: 24px;
+  }
+
   .favorites-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: 1fr;
+  }
+
+  .review-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }
 </style>
