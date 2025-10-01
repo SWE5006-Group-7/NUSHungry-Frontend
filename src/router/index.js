@@ -2,6 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/pages/HomePage.vue'
 import CafeteriaDetail from '@/pages/CafeteriaDetail.vue'
 import StallDetail from '@/pages/StallDetail.vue'
+import LoginPage from '@/pages/LoginPage.vue'
+import RegisterPage from '@/pages/RegisterPage.vue'
+import ProfilePage from '@/pages/ProfilePage.vue'
+import SettingsPage from '@/pages/SettingsPage.vue'
+import authService from '@/services/authService'
 
 const routes = [
   {
@@ -18,12 +23,58 @@ const routes = [
     path: '/stalls/:id',
     name: 'StallDetail',
     component: StallDetail
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: LoginPage,
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: RegisterPage,
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: ProfilePage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: SettingsPage,
+    meta: { requiresAuth: true }
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+
+// 路由守卫
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = authService.isAuthenticated()
+
+  // 需要登录的页面
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    // 保存当前路径,登录后可以重定向回来
+    next({
+      path: '/login',
+      query: { redirect: to.fullPath }
+    })
+  }
+  // 已登录用户不能访问登录/注册页面
+  else if (to.meta.requiresGuest && isAuthenticated) {
+    next('/')
+  }
+  // 正常放行
+  else {
+    next()
+  }
 })
 
 export default router
