@@ -35,12 +35,17 @@
                 <div style="display: flex; justify-content: space-between; align-items: start;">
                   <a-typography-title :level="4" style="margin: 0;">{{ stall.name }}</a-typography-title>
                   <a-button
-                    :type="isFavorite ? 'primary' : 'default'"
-                    :icon="isFavorite ? '❤️' : '🤍'"
+                    type="text"
                     @click="toggleFavorite"
-                    style="border-radius: 8px;"
+                    :style="{
+                      fontSize: '24px',
+                      color: isFavorite ? '#fadb14' : '#d9d9d9',
+                      padding: '4px 8px',
+                      height: 'auto',
+                      lineHeight: '1'
+                    }"
                   >
-                    {{ isFavorite ? 'Favorited' : 'Add to Favorites' }}
+                    {{ isFavorite ? '★' : '☆' }}
                   </a-button>
                 </div>
                 <a-space direction="vertical" size="small" style="margin-top: 8px;">
@@ -137,6 +142,7 @@
 import { onMounted, computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStallStore } from '@/stores/stall'
+import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
 import { UploadOutlined } from '@ant-design/icons-vue'
@@ -149,24 +155,25 @@ import { favoriteService } from '@/services/favoriteService'
 const route = useRoute()
 const router = useRouter()
 const stallStore = useStallStore()
+const userStore = useUserStore()
 const { currentStall: stall, reviews, loading, error } = storeToRefs(stallStore)
+const { userId, isAuthenticated } = storeToRefs(userStore)
 
 const customerImages = computed(() => stall.value?.images || [])
 const isFavorite = ref(false)
-
-// 临时用户ID，实际应该从认证系统获取
-const userId = 'guest-user-1'
 
 onMounted(async () => {
   const stallId = route.params.id
   stallStore.fetchStallById(stallId)
   stallStore.fetchReviewsByStallId(stallId)
 
-  // 检查是否已收藏
-  try {
-    isFavorite.value = await favoriteService.checkFavorite(userId, stallId)
-  } catch (error) {
-    console.error('Failed to check favorite status', error)
+  // 检查是否已收藏（仅当用户已登录时）
+  if (isAuthenticated.value && userId.value) {
+    try {
+      isFavorite.value = await favoriteService.checkFavorite(userId.value, stallId)
+    } catch (error) {
+      console.error('Failed to check favorite status', error)
+    }
   }
 })
 
@@ -174,13 +181,20 @@ const goBack = () => router.back()
 
 // 收藏功能
 const toggleFavorite = async () => {
+  // 检查用户是否已登录
+  if (!isAuthenticated.value || !userId.value) {
+    message.warning('Please login to add favorites')
+    router.push('/login')
+    return
+  }
+
   try {
     if (isFavorite.value) {
-      await favoriteService.removeFavorite(userId, route.params.id)
+      await favoriteService.removeFavorite(userId.value, route.params.id)
       message.success('Removed from favorites')
       isFavorite.value = false
     } else {
-      await favoriteService.addFavorite(userId, route.params.id)
+      await favoriteService.addFavorite(userId.value, route.params.id)
       message.success('Added to favorites')
       isFavorite.value = true
     }

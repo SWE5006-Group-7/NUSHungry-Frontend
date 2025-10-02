@@ -9,7 +9,7 @@ export const useUserStore = defineStore('user', () => {
   const isLoading = ref(false)
 
   // Getters
-  const isAuthenticated = computed(() => !!token.value)
+  const isAuthenticated = computed(() => !!token.value && !!user.value)
   const username = computed(() => user.value?.username || '')
   const userId = computed(() => user.value?.id || null)
 
@@ -30,8 +30,16 @@ export const useUserStore = defineStore('user', () => {
       isLoading.value = true
       const response = await authService.login(credentials)
 
+      console.log('Login response:', response)
+
       token.value = response.token
       user.value = response.user
+
+      console.log('User store updated:', {
+        token: token.value,
+        user: user.value,
+        isAuthenticated: isAuthenticated.value
+      })
 
       return { success: true, user: response.user }
     } catch (error) {

@@ -25,8 +25,13 @@
     <!-- 已登录状态 -->
     <a-dropdown v-else placement="bottomRight">
       <div class="user-menu">
-        <a-avatar :style="{ backgroundColor: '#1890ff' }">
-          {{ userStore.username.charAt(0).toUpperCase() }}
+        <a-avatar
+          :src="userStore.user?.avatarUrl ? `http://localhost:8080${userStore.user.avatarUrl}` : undefined"
+          :style="{ backgroundColor: '#1890ff' }"
+        >
+          <template v-if="!userStore.user?.avatarUrl">
+            {{ userStore.username.charAt(0).toUpperCase() }}
+          </template>
         </a-avatar>
         <span class="username">{{ userStore.username }}</span>
       </div>
@@ -89,10 +94,12 @@ const goToHome = () => {
 }
 
 const goToLogin = () => {
+  console.log('goToLogin clicked')
   router.push('/login')
 }
 
 const goToRegister = () => {
+  console.log('goToRegister clicked')
   router.push('/register')
 }
 

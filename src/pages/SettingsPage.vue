@@ -13,6 +13,42 @@
 
       <!-- 设置卡片 -->
       <div class="settings-cards">
+        <!-- 头像上传卡片 -->
+        <a-card class="setting-card" :hoverable="false">
+          <template #title>
+            <div class="card-title">
+              <UserOutlined class="card-icon" />
+              <span>头像设置</span>
+            </div>
+          </template>
+          <div class="avatar-section">
+            <div class="avatar-preview">
+              <a-avatar
+                :size="120"
+                :src="avatarPreview || (userStore.user?.avatarUrl ? `http://localhost:8080${userStore.user.avatarUrl}` : undefined)"
+                :style="{ backgroundColor: '#1890ff' }"
+              >
+                <template v-if="!avatarPreview && !userStore.user?.avatarUrl">
+                  {{ userStore.username.charAt(0).toUpperCase() }}
+                </template>
+              </a-avatar>
+            </div>
+            <div class="avatar-upload">
+              <a-upload
+                :before-upload="handleBeforeUpload"
+                :show-upload-list="false"
+                accept="image/*"
+              >
+                <a-button type="primary" size="large" :loading="uploadingAvatar">
+                  <UploadOutlined />
+                  选择头像
+                </a-button>
+              </a-upload>
+              <p class="upload-tip">支持 JPG、PNG 格式，文件大小不超过 2MB</p>
+            </div>
+          </div>
+        </a-card>
+
         <!-- 个人信息卡片 -->
         <a-card class="setting-card" :hoverable="false">
           <template #title>
@@ -170,10 +206,12 @@ import {
   MailOutlined,
   LockOutlined,
   LogoutOutlined,
-  SettingOutlined
+  SettingOutlined,
+  UploadOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import Header from '@/components/Header.vue'
+import authService from '@/services/authService'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -181,6 +219,8 @@ const userStore = useUserStore()
 const activeTab = ref('profile')
 const loadingProfile = ref(false)
 const loadingPassword = ref(false)
+const uploadingAvatar = ref(false)
+const avatarPreview = ref(null)
 
 // 个人信息表单
 const profileForm = reactive({
@@ -300,6 +340,51 @@ const handleLogout = () => {
   userStore.logout()
   message.success('已退出登录')
   router.push('/login')
+}
+
+// 头像上传前的处理
+const handleBeforeUpload = async (file) => {
+  // 检查文件类型
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    message.error('只能上传图片文件!')
+    return false
+  }
+
+  // 检查文件大小 (2MB)
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isLt2M) {
+    message.error('图片大小不能超过 2MB!')
+    return false
+  }
+
+  // 上传头像
+  try {
+    uploadingAvatar.value = true
+
+    // 创建预览
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      avatarPreview.value = e.target.result
+    }
+    reader.readAsDataURL(file)
+
+    // 上传到服务器
+    const avatarUrl = await authService.uploadAvatar(file)
+
+    // 更新用户store
+    userStore.user.avatarUrl = avatarUrl
+
+    message.success('头像上传成功!')
+  } catch (error) {
+    message.error('头像上传失败,请稍后重试')
+    console.error('Upload avatar error:', error)
+    avatarPreview.value = null
+  } finally {
+    uploadingAvatar.value = false
+  }
+
+  return false // 阻止自动上传
 }
 
 onMounted(() => {
@@ -478,6 +563,28 @@ onMounted(() => {
 :deep(.ant-btn-primary.ant-btn-dangerous:active) {
   background: #991b1b;
   border-color: #991b1b;
+}
+
+/* 头像上传区域 */
+.avatar-section {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 12px 0;
+}
+
+.avatar-preview {
+  flex-shrink: 0;
+}
+
+.avatar-upload {
+  flex: 1;
+}
+
+.upload-tip {
+  margin-top: 12px;
+  color: #6b7280;
+  font-size: 13px;
 }
 
 /* 账户管理区域 */

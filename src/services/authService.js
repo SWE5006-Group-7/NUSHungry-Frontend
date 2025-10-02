@@ -43,7 +43,18 @@ export default {
   async register(userData) {
     try {
       const response = await apiClient.post('/auth/register', userData)
-      return response.data
+      const { token, id, username, email, avatarUrl } = response.data
+
+      // 构建user对象
+      const user = { id, username, email, avatarUrl }
+
+      // 保存token和用户信息
+      if (token) {
+        localStorage.setItem('token', token)
+        localStorage.setItem('user', JSON.stringify(user))
+      }
+
+      return { token, user }
     } catch (error) {
       throw error.response?.data || error.message
     }
@@ -53,7 +64,10 @@ export default {
   async login(credentials) {
     try {
       const response = await apiClient.post('/auth/login', credentials)
-      const { token, user } = response.data
+      const { token, id, username, email, avatarUrl } = response.data
+
+      // 构建user对象
+      const user = { id, username, email, avatarUrl }
 
       // 保存token和用户信息
       if (token) {
@@ -61,7 +75,7 @@ export default {
         localStorage.setItem('user', JSON.stringify(user))
       }
 
-      return response.data
+      return { token, user }
     } catch (error) {
       throw error.response?.data || error.message
     }
@@ -76,12 +90,24 @@ export default {
   // 获取当前用户信息
   getCurrentUser() {
     const userStr = localStorage.getItem('user')
-    return userStr ? JSON.parse(userStr) : null
+    if (!userStr || userStr === 'undefined' || userStr === 'null') {
+      return null
+    }
+    try {
+      return JSON.parse(userStr)
+    } catch (error) {
+      console.error('Failed to parse user data:', error)
+      localStorage.removeItem('user')
+      return null
+    }
   },
 
   // 检查是否已登录
   isAuthenticated() {
-    return !!localStorage.getItem('token')
+    const token = localStorage.getItem('token')
+    const user = this.getCurrentUser()
+    // 必须同时有token和有效的user数据
+    return !!token && !!user && token !== 'undefined' && token !== 'null'
   },
 
   // 获取token
@@ -136,6 +162,31 @@ export default {
       // 更新本地存储的用户信息
       localStorage.setItem('user', JSON.stringify(response.data))
       return response.data
+    } catch (error) {
+      throw error.response?.data || error.message
+    }
+  },
+
+  // 上传头像
+  async uploadAvatar(file) {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await apiClient.post('/user/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      // 更新本地用户信息中的头像URL
+      const currentUser = this.getCurrentUser()
+      if (currentUser) {
+        currentUser.avatarUrl = response.data.avatarUrl
+        localStorage.setItem('user', JSON.stringify(currentUser))
+      }
+
+      return response.data.avatarUrl
     } catch (error) {
       throw error.response?.data || error.message
     }

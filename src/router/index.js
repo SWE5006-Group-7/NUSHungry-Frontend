@@ -59,9 +59,18 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const isAuthenticated = authService.isAuthenticated()
 
+  console.log('Router guard:', {
+    to: to.path,
+    from: from.path,
+    isAuthenticated,
+    requiresAuth: to.meta.requiresAuth,
+    requiresGuest: to.meta.requiresGuest
+  })
+
   // 需要登录的页面
   if (to.meta.requiresAuth && !isAuthenticated) {
     // 保存当前路径,登录后可以重定向回来
+    console.log('Redirecting to login - auth required')
     next({
       path: '/login',
       query: { redirect: to.fullPath }
@@ -69,10 +78,12 @@ router.beforeEach((to, from, next) => {
   }
   // 已登录用户不能访问登录/注册页面
   else if (to.meta.requiresGuest && isAuthenticated) {
+    console.log('Redirecting to home - already authenticated')
     next('/')
   }
   // 正常放行
   else {
+    console.log('Navigation allowed')
     next()
   }
 })
