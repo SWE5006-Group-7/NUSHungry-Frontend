@@ -62,7 +62,7 @@ const cardStyle = { borderRadius: '16px', boxShadow: '0 4px 16px rgba(0,0,0,0.06
 const imageBox = { position: 'relative', height: '160px', borderRadius: '12px', overflow: 'hidden', background: '#f1f5f9' }
 const imageStyle = { position: 'absolute', inset: 0, backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: `url(${(props.cafeteria.image)})` }
 const openTag = { position: 'absolute', top: '8px', right: '8px' }
-const distanceTag = { position: 'absolute', bottom: '8px', left: '8px' }
+const distanceTag = { position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)' }
 </script>
 
 <style scoped>

@@ -1,13 +1,13 @@
 import apiClient from '@/utils/request';
 
 export const getCafeterias = () => {
-  return apiClient.get('/api/cafeterias');
+  return apiClient.get('/cafeterias');
 };
 
 export const getPopularCafeterias = () => {
-  return apiClient.get('/api/cafeterias/popular');
+  return apiClient.get('/cafeterias/popular');
 };
 
 export const getCafeteriaById = (id) => {
-  return apiClient.get(`/api/cafeterias/${id}`);
+  return apiClient.get(`/cafeterias/${id}`);
 };
