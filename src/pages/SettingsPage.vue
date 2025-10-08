@@ -25,7 +25,7 @@
             <div class="avatar-preview">
               <a-avatar
                 :size="120"
-                :src="avatarPreview || (userStore.user?.avatarUrl ? `http://localhost:8080${userStore.user.avatarUrl}` : undefined)"
+                :src="avatarPreview || (userStore.user?.avatarUrl ? getResourceUrl(userStore.user.avatarUrl) : undefined)"
                 :style="{ backgroundColor: '#1890ff' }"
               >
                 <template v-if="!avatarPreview && !userStore.user?.avatarUrl">
@@ -212,6 +212,7 @@ import {
 import { useUserStore } from '@/stores/user'
 import Header from '@/components/Header.vue'
 import authService from '@/services/authService'
+import { getResourceUrl } from '@/utils/config'
 
 const router = useRouter()
 const userStore = useUserStore()

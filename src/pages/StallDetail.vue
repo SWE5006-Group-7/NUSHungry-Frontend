@@ -90,7 +90,7 @@
                     minWidth: '150px',
                     height: '150px',
                     borderRadius: '8px',
-                    backgroundImage: `url(http://localhost:8080${img.imageUrl})`,
+                    backgroundImage: `url(${getResourceUrl(img.imageUrl)})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     cursor: 'pointer'
@@ -151,6 +151,7 @@ import ReviewCard from '@/components/ReviewCard.vue'
 import MapSection from '@/components/MapSection.vue'
 import { imageService } from '@/services/imageService'
 import { favoriteService } from '@/services/favoriteService'
+import { getResourceUrl } from '@/utils/config'
 
 const route = useRoute()
 const router = useRouter()
@@ -232,7 +233,7 @@ const handleUploadStallImage = async ({ file }) => {
 }
 
 const previewImage = (imageUrl) => {
-  window.open(`http://localhost:8080${imageUrl}`, '_blank')
+  window.open(getResourceUrl(imageUrl), '_blank')
 }
 
 // 导航功能

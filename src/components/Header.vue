@@ -26,7 +26,7 @@
     <a-dropdown v-else placement="bottomRight">
       <div class="user-menu">
         <a-avatar
-          :src="userStore.user?.avatarUrl ? `http://localhost:8080${userStore.user.avatarUrl}` : undefined"
+          :src="userStore.user?.avatarUrl ? getResourceUrl(userStore.user.avatarUrl) : undefined"
           :style="{ backgroundColor: '#1890ff' }"
         >
           <template v-if="!userStore.user?.avatarUrl">
@@ -61,6 +61,7 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { UserOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { getResourceUrl } from '@/utils/config'
 
 const router = useRouter()
 const userStore = useUserStore()

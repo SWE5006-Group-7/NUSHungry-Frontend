@@ -118,6 +118,7 @@ dist-ssr
 .vscode/
 *.swp
 *.swo
+.spec-workflow/
 
 # Local secrets
 .env.development

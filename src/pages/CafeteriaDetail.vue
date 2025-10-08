@@ -81,7 +81,7 @@
                     minWidth: '150px',
                     height: '150px',
                     borderRadius: '8px',
-                    backgroundImage: `url(http://localhost:8080${img.imageUrl})`,
+                    backgroundImage: `url(${getResourceUrl(img.imageUrl)})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     cursor: 'pointer'
@@ -155,6 +155,7 @@ import { UploadOutlined } from '@ant-design/icons-vue'
 import Header from '@/components/Header.vue'
 import MapSection from '@/components/MapSection.vue'
 import { imageService } from '@/services/imageService'
+import { getResourceUrl } from '@/utils/config'
 
 const route = useRoute()
 const router = useRouter()
@@ -200,7 +201,7 @@ const handleUploadCafeteriaImage = async ({ file }) => {
 }
 
 const previewImage = (imageUrl) => {
-  window.open(`http://localhost:8080${imageUrl}`, '_blank')
+  window.open(getResourceUrl(imageUrl), '_blank')
 }
 
 // 导航功能
