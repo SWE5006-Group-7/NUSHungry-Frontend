@@ -6,7 +6,13 @@ import LoginPage from '@/pages/LoginPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
 import ProfilePage from '@/pages/ProfilePage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
+import AdminLogin from '@/views/admin/AdminLogin.vue'
+import AdminDashboard from '@/views/admin/AdminDashboard.vue'
+import UserManagement from '@/views/admin/UserManagement.vue'
+import ChangePassword from '@/views/admin/ChangePassword.vue'
+import TokenDebug from '@/views/admin/TokenDebug.vue'
 import authService from '@/services/authService'
+import { isAdmin, getCurrentUserRole } from '@/utils/role'
 
 const routes = [
   {
@@ -47,6 +53,41 @@ const routes = [
     name: 'Settings',
     component: SettingsPage,
     meta: { requiresAuth: true }
+  },
+  // 管理员路由
+  {
+    path: '/admin/login',
+    name: 'AdminLogin',
+    component: AdminLogin,
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/admin',
+    redirect: '/admin/dashboard'
+  },
+  {
+    path: '/admin/dashboard',
+    name: 'AdminDashboard',
+    component: AdminDashboard,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/users',
+    name: 'UserManagement',
+    component: UserManagement,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/change-password',
+    name: 'ChangePassword',
+    component: ChangePassword,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/token-debug',
+    name: 'TokenDebug',
+    component: TokenDebug
+    // 不需要任何权限，用于调试
   }
 ]
 
@@ -58,34 +99,67 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const isAuthenticated = authService.isAuthenticated()
+  const userIsAdmin = isAdmin()
 
   console.log('Router guard:', {
     to: to.path,
     from: from.path,
     isAuthenticated,
+    userIsAdmin,
     requiresAuth: to.meta.requiresAuth,
+    requiresAdmin: to.meta.requiresAdmin,
     requiresGuest: to.meta.requiresGuest
   })
+
+  // 需要管理员权限的页面
+  if (to.meta.requiresAdmin) {
+    console.log('Admin check:', {
+      requiresAdmin: to.meta.requiresAdmin,
+      userIsAdmin: userIsAdmin,
+      role: getCurrentUserRole(),
+      token: localStorage.getItem('token')?.substring(0, 50) + '...'
+    })
+
+    if (!userIsAdmin) {
+      console.log('Redirecting - admin required but user is not admin')
+      next('/admin/login')
+      return
+    }
+  }
 
   // 需要登录的页面
   if (to.meta.requiresAuth && !isAuthenticated) {
     // 保存当前路径,登录后可以重定向回来
     console.log('Redirecting to login - auth required')
+    // 如果是管理员页面，重定向到管理员登录
+    const loginPath = to.path.startsWith('/admin') ? '/admin/login' : '/login'
     next({
-      path: '/login',
+      path: loginPath,
       query: { redirect: to.fullPath }
     })
+    return
   }
+
   // 已登录用户不能访问登录/注册页面
-  else if (to.meta.requiresGuest && isAuthenticated) {
-    console.log('Redirecting to home - already authenticated')
-    next('/')
+  if (to.meta.requiresGuest && isAuthenticated) {
+    console.log('Redirecting - already authenticated, isAdmin:', userIsAdmin)
+    // 如果是管理员且访问管理员登录页，重定向到管理员首页
+    if (to.path === '/admin/login' && userIsAdmin) {
+      next('/admin/dashboard')
+      return
+    } else if (to.path === '/admin/login') {
+      // 非管理员访问管理员登录页，不做限制，允许登录
+      next()
+      return
+    } else {
+      next('/')
+      return
+    }
   }
+
   // 正常放行
-  else {
-    console.log('Navigation allowed')
-    next()
-  }
+  console.log('Navigation allowed')
+  next()
 })
 
 export default router
