@@ -85,19 +85,28 @@ export default {
   logout() {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    localStorage.removeItem('userInfo')  // 同时清除管理员登录的信息
   },
 
   // 获取当前用户信息
   getCurrentUser() {
-    const userStr = localStorage.getItem('user')
+    // 兼容两种存储方式：user 和 userInfo
+    let userStr = localStorage.getItem('user')
+    if (!userStr || userStr === 'undefined' || userStr === 'null') {
+      // 如果没有 user，尝试获取 userInfo（管理员登录使用的）
+      userStr = localStorage.getItem('userInfo')
+    }
+
     if (!userStr || userStr === 'undefined' || userStr === 'null') {
       return null
     }
+
     try {
       return JSON.parse(userStr)
     } catch (error) {
       console.error('Failed to parse user data:', error)
       localStorage.removeItem('user')
+      localStorage.removeItem('userInfo')
       return null
     }
   },
