@@ -79,15 +79,6 @@ const adminUserApi = {
       params,
       responseType: 'blob'
     });
-  },
-
-  // 获取用户活动日志
-  getUserActivities(id, params) {
-    return request({
-      url: `/admin/users/${id}/activities`,
-      method: 'get',
-      params
-    });
   }
 };
 

@@ -9,6 +9,7 @@ import SettingsPage from '@/pages/SettingsPage.vue'
 import AdminLogin from '@/views/admin/AdminLogin.vue'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 import UserManagement from '@/views/admin/UserManagement.vue'
+import CafeteriaManagement from '@/views/admin/CafeteriaManagement.vue'
 import ChangePassword from '@/views/admin/ChangePassword.vue'
 import TokenDebug from '@/views/admin/TokenDebug.vue'
 import authService from '@/services/authService'
@@ -75,6 +76,12 @@ const routes = [
     path: '/admin/users',
     name: 'UserManagement',
     component: UserManagement,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/cafeterias',
+    name: 'CafeteriaManagement',
+    component: CafeteriaManagement,
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {

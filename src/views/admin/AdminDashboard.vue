@@ -8,7 +8,7 @@
 
     <!-- 统计卡片区域 -->
     <a-row :gutter="[16, 16]" class="stats-cards">
-      <a-col :xs="24" :sm="12" :md="6" v-for="card in statsCards" :key="card.title">
+      <a-col :xs="12" :sm="12" :md="6" v-for="card in statsCards" :key="card.title">
         <a-card :loading="statsLoading" hoverable>
           <a-statistic
             :title="card.title"
@@ -74,8 +74,40 @@
 
     <!-- 数据表格区域 -->
     <a-row :gutter="[16, 16]" class="tables-section">
+      <!-- 最新食堂 -->
+      <a-col :xs="24" :lg="8">
+        <a-card title="最新食堂">
+          <template #extra>
+            <a-button type="link" @click="goToCafeteriaManagement">
+              查看全部 <RightOutlined />
+            </a-button>
+          </template>
+          <a-table
+            :columns="cafeteriaColumns"
+            :data-source="latestCafeterias"
+            :loading="tablesLoading"
+            :pagination="false"
+            size="small"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'name'">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <a-avatar :src="record.imageUrl" shape="square" :size="32">
+                    {{ record.name?.substring(0, 2) }}
+                  </a-avatar>
+                  <span>{{ record.name }}</span>
+                </div>
+              </template>
+              <template v-else-if="column.key === 'location'">
+                <a-tag color="blue">{{ record.location }}</a-tag>
+              </template>
+            </template>
+          </a-table>
+        </a-card>
+      </a-col>
+
       <!-- 最新用户 -->
-      <a-col :xs="24" :lg="12">
+      <a-col :xs="24" :lg="8">
         <a-card title="最新注册用户">
           <template #extra>
             <a-button type="link" @click="goToUserManagement">
@@ -104,7 +136,7 @@
       </a-col>
 
       <!-- 最新评价 -->
-      <a-col :xs="24" :lg="12">
+      <a-col :xs="24" :lg="8">
         <a-card title="最新评价">
           <template #extra>
             <a-button type="link" @click="goToReviewManagement">
@@ -194,10 +226,17 @@ const statsCards = ref([
     trend: 0
   },
   {
-    title: '总摊位数',
+    title: '总食堂数',
     value: 0,
     icon: ShoppingOutlined,
     color: '#52c41a',
+    trend: 0
+  },
+  {
+    title: '总摊位数',
+    value: 0,
+    icon: ShoppingOutlined,
+    color: '#13c2c2',
     trend: 0
   },
   {
@@ -205,13 +244,6 @@ const statsCards = ref([
     value: 0,
     icon: StarOutlined,
     color: '#faad14',
-    trend: 0
-  },
-  {
-    title: '今日订单',
-    value: 0,
-    icon: DollarOutlined,
-    color: '#722ed1',
     trend: 0
   }
 ]);
@@ -227,14 +259,21 @@ const overviewItems = ref([
 // 用户增长数据
 const userGrowthData = ref([]);
 
+// 最新食堂数据
+const latestCafeterias = ref([]);
+
+// 食堂表格列配置
+const cafeteriaColumns = [
+  { title: '食堂名称', key: 'name', width: 180 },
+  { title: '位置', key: 'location', width: 100 }
+];
+
 // 最新用户数据
 const latestUsers = ref([]);
 
 // 用户表格列配置
 const userColumns = [
   { title: '用户名', dataIndex: 'username', key: 'username' },
-  { title: '邮箱', dataIndex: 'email', key: 'email' },
-  { title: '注册时间', dataIndex: 'createdAt', key: 'createdAt' },
   { title: '状态', key: 'status', width: 80 }
 ];
 
@@ -251,10 +290,12 @@ const reviewColumns = [
 
 // 快捷操作
 const quickActions = ref([
-  { title: '添加用户', icon: PlusOutlined, color: '#1890ff', action: 'addUser' },
-  { title: '添加摊位', icon: PlusOutlined, color: '#52c41a', action: 'addStall' },
+  { title: '添加食堂', icon: PlusOutlined, color: '#52c41a', action: 'addCafeteria' },
+  { title: '食堂管理', icon: ShoppingOutlined, color: '#13c2c2', action: 'manageCafeterias' },
+  { title: '用户管理', icon: UserOutlined, color: '#1890ff', action: 'manageUsers' },
   { title: '查看评价', icon: StarOutlined, color: '#faad14', action: 'viewReviews' },
-  { title: '系统设置', icon: SettingOutlined, color: '#722ed1', action: 'settings' }
+  { title: '添加摊位', icon: PlusOutlined, color: '#722ed1', action: 'addStall' },
+  { title: '系统设置', icon: SettingOutlined, color: '#8c8c8c', action: 'settings' }
 ]);
 
 // 格式化日期
@@ -283,10 +324,17 @@ const fetchDashboardData = async () => {
           trend: data.statsCards.userTrend || 0
         },
         {
+          title: '总食堂数',
+          value: data.statsCards.totalCafeterias || 0,
+          icon: ShoppingOutlined,
+          color: '#52c41a',
+          trend: data.statsCards.cafeteriaTrend || 0
+        },
+        {
           title: '总摊位数',
           value: data.statsCards.totalStalls || 0,
           icon: ShoppingOutlined,
-          color: '#52c41a',
+          color: '#13c2c2',
           trend: data.statsCards.stallTrend || 0
         },
         {
@@ -295,13 +343,6 @@ const fetchDashboardData = async () => {
           icon: StarOutlined,
           color: '#faad14',
           trend: data.statsCards.reviewTrend || 0
-        },
-        {
-          title: '今日订单',
-          value: data.statsCards.todayOrders || 0,
-          icon: DollarOutlined,
-          color: '#722ed1',
-          trend: data.statsCards.orderTrend || 0
         }
       ];
     }
@@ -340,6 +381,11 @@ const fetchDashboardData = async () => {
       userGrowthData.value = data.userGrowthData;
     }
 
+    // 更新最新食堂
+    if (data.latestCafeterias) {
+      latestCafeterias.value = data.latestCafeterias;
+    }
+
     // 更新最新用户
     if (data.latestUsers) {
       latestUsers.value = data.latestUsers;
@@ -370,11 +416,22 @@ const goToReviewManagement = () => {
   message.info('评价管理功能正在开发中');
 };
 
+// 跳转到食堂管理
+const goToCafeteriaManagement = () => {
+  router.push('/admin/cafeterias');
+};
+
 // 处理快捷操作
 const handleQuickAction = (action) => {
   switch (action.action) {
-    case 'addUser':
-      message.info('添加用户功能正在开发中');
+    case 'addCafeteria':
+      router.push('/admin/cafeterias');
+      break;
+    case 'manageCafeterias':
+      goToCafeteriaManagement();
+      break;
+    case 'manageUsers':
+      goToUserManagement();
       break;
     case 'addStall':
       message.info('添加摊位功能正在开发中');
