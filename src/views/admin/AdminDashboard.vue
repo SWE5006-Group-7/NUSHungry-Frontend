@@ -32,7 +32,7 @@
     <!-- 图表区域 -->
     <a-row :gutter="[16, 16]" class="charts-section">
       <!-- 用户增长趋势 -->
-      <a-col :xs="24" :lg="16">
+      <a-col :xs="24">
         <a-card title="用户增长趋势" :loading="chartsLoading">
           <template #extra>
             <a-range-picker
@@ -52,62 +52,12 @@
           </div>
         </a-card>
       </a-col>
-
-      <!-- 系统概览 -->
-      <a-col :xs="24" :lg="8">
-        <a-card title="系统概览">
-          <div class="overview-content">
-            <div class="overview-item" v-for="item in overviewItems" :key="item.label">
-              <div class="overview-label">{{ item.label }}</div>
-              <div class="overview-value">{{ item.value }}</div>
-              <a-progress
-                v-if="item.progress !== undefined"
-                :percent="item.progress"
-                :stroke-color="item.progressColor"
-                :stroke-width="6"
-              />
-            </div>
-          </div>
-        </a-card>
-      </a-col>
     </a-row>
 
     <!-- 数据表格区域 -->
     <a-row :gutter="[16, 16]" class="tables-section">
-      <!-- 最新食堂 -->
-      <a-col :xs="24" :lg="8">
-        <a-card title="最新食堂">
-          <template #extra>
-            <a-button type="link" @click="goToCafeteriaManagement">
-              查看全部 <RightOutlined />
-            </a-button>
-          </template>
-          <a-table
-            :columns="cafeteriaColumns"
-            :data-source="latestCafeterias"
-            :loading="tablesLoading"
-            :pagination="false"
-            size="small"
-          >
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'name'">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <a-avatar :src="record.imageUrl" shape="square" :size="32">
-                    {{ record.name?.substring(0, 2) }}
-                  </a-avatar>
-                  <span>{{ record.name }}</span>
-                </div>
-              </template>
-              <template v-else-if="column.key === 'location'">
-                <a-tag color="blue">{{ record.location }}</a-tag>
-              </template>
-            </template>
-          </a-table>
-        </a-card>
-      </a-col>
-
       <!-- 最新用户 -->
-      <a-col :xs="24" :lg="8">
+      <a-col :xs="24" :lg="12">
         <a-card title="最新注册用户">
           <template #extra>
             <a-button type="link" @click="goToUserManagement">
@@ -136,7 +86,7 @@
       </a-col>
 
       <!-- 最新评价 -->
-      <a-col :xs="24" :lg="8">
+      <a-col :xs="24" :lg="12">
         <a-card title="最新评价">
           <template #extra>
             <a-button type="link" @click="goToReviewManagement">
@@ -248,25 +198,8 @@ const statsCards = ref([
   }
 ]);
 
-// 系统概览数据
-const overviewItems = ref([
-  { label: '系统运行时间', value: '0天' },
-  { label: '活跃用户', value: '0', progress: 0, progressColor: '#52c41a' },
-  { label: '待处理投诉', value: '0', progress: 0, progressColor: '#faad14' },
-  { label: '系统健康度', value: '加载中...', progress: 0, progressColor: '#1890ff' }
-]);
-
 // 用户增长数据
 const userGrowthData = ref([]);
-
-// 最新食堂数据
-const latestCafeterias = ref([]);
-
-// 食堂表格列配置
-const cafeteriaColumns = [
-  { title: '食堂名称', key: 'name', width: 180 },
-  { title: '位置', key: 'location', width: 100 }
-];
 
 // 最新用户数据
 const latestUsers = ref([]);
@@ -290,11 +223,10 @@ const reviewColumns = [
 
 // 快捷操作
 const quickActions = ref([
-  { title: '添加食堂', icon: PlusOutlined, color: '#52c41a', action: 'addCafeteria' },
-  { title: '食堂管理', icon: ShoppingOutlined, color: '#13c2c2', action: 'manageCafeterias' },
+arrow-left  { title: '食堂管理', icon: ShoppingOutlined, color: '#13c2c2', action: 'manageCafeterias' },
+  { title: '摊位管理', icon: ShoppingOutlined, color: '#722ed1', action: 'manageStalls' },
   { title: '用户管理', icon: UserOutlined, color: '#1890ff', action: 'manageUsers' },
   { title: '查看评价', icon: StarOutlined, color: '#faad14', action: 'viewReviews' },
-  { title: '添加摊位', icon: PlusOutlined, color: '#722ed1', action: 'addStall' },
   { title: '系统设置', icon: SettingOutlined, color: '#8c8c8c', action: 'settings' }
 ]);
 
@@ -347,43 +279,9 @@ const fetchDashboardData = async () => {
       ];
     }
 
-    // 更新系统概览
-    if (data.systemOverview) {
-      const overview = data.systemOverview;
-      overviewItems.value = [
-        {
-          label: '系统运行时间',
-          value: `${overview.runningDays || 0}天`
-        },
-        {
-          label: '活跃用户',
-          value: `${overview.activeUsers || 0}`,
-          progress: overview.activeUserPercentage || 0,
-          progressColor: '#52c41a'
-        },
-        {
-          label: '待处理投诉',
-          value: `${overview.pendingComplaints || 0}`,
-          progress: overview.pendingComplaintPercentage || 0,
-          progressColor: '#faad14'
-        },
-        {
-          label: '系统健康度',
-          value: overview.healthStatus || '良好',
-          progress: overview.healthScore || 0,
-          progressColor: '#1890ff'
-        }
-      ];
-    }
-
     // 更新用户增长数据
     if (data.userGrowthData) {
       userGrowthData.value = data.userGrowthData;
-    }
-
-    // 更新最新食堂
-    if (data.latestCafeterias) {
-      latestCafeterias.value = data.latestCafeterias;
     }
 
     // 更新最新用户
@@ -421,6 +319,11 @@ const goToCafeteriaManagement = () => {
   router.push('/admin/cafeterias');
 };
 
+// 跳转到摊位管理
+const goToStallManagement = () => {
+  router.push('/admin/stalls');
+};
+
 // 处理快捷操作
 const handleQuickAction = (action) => {
   switch (action.action) {
@@ -430,11 +333,11 @@ const handleQuickAction = (action) => {
     case 'manageCafeterias':
       goToCafeteriaManagement();
       break;
+    case 'manageStalls':
+      goToStallManagement();
+      break;
     case 'manageUsers':
       goToUserManagement();
-      break;
-    case 'addStall':
-      message.info('添加摊位功能正在开发中');
       break;
     case 'viewReviews':
       goToReviewManagement();
@@ -455,7 +358,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .admin-dashboard {
-  padding: 24px;
+  padding: 24px 12%;
   background: #f0f2f5;
   min-height: calc(100vh - 64px);
 
@@ -499,29 +402,6 @@ onMounted(() => {
     }
   }
 
-  .overview-content {
-    .overview-item {
-      margin-bottom: 20px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      .overview-label {
-        color: #909399;
-        font-size: 14px;
-        margin-bottom: 8px;
-      }
-
-      .overview-value {
-        font-size: 20px;
-        font-weight: 600;
-        color: #303133;
-        margin-bottom: 8px;
-      }
-    }
-  }
-
   .quick-actions {
     h3 {
       font-size: 18px;
@@ -558,7 +438,7 @@ onMounted(() => {
 // 响应式设计
 @media screen and (max-width: 768px) {
   .admin-dashboard {
-    padding: 12px;
+    padding: 12px 5%;
 
     .dashboard-header {
       h1 {

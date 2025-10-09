@@ -3,6 +3,9 @@
     <!-- 页面标题和操作按钮 -->
     <div class="page-header">
       <div class="header-left">
+        <a-button type="text" @click="goToDashboard" style="margin-right: 12px;">
+          <template #icon><ArrowLeftOutlined /></template>
+        </a-button>
         <h2>食堂管理</h2>
         <span class="subtitle">共 {{ totalCafeterias }} 个食堂</span>
       </div>
@@ -154,16 +157,20 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import {
   PlusOutlined,
   ReloadOutlined,
   DownOutlined,
   CloseCircleOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  ArrowLeftOutlined
 } from '@ant-design/icons-vue';
 import CafeteriaForm from '@/components/admin/CafeteriaForm.vue';
 import adminCafeteriaApi from '@/api/admin/cafeteria';
+
+const router = useRouter();
 
 // 数据状态
 const loading = ref(false);
@@ -230,6 +237,11 @@ const columns = [
 const isOpen = (cafeteria) => {
   return cafeteria.termTimeOpeningHours !== '暂停营业' &&
          cafeteria.vacationOpeningHours !== '暂停营业';
+};
+
+// 返回dashboard
+const goToDashboard = () => {
+  router.push('/admin/dashboard');
 };
 
 // 获取食堂列表
@@ -365,7 +377,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .cafeteria-management {
-  padding: 24px;
+  padding: 24px 12%;
 
   .page-header {
     display: flex;

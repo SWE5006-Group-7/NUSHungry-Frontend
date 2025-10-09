@@ -3,6 +3,9 @@
     <!-- 页面标题和操作按钮 -->
     <div class="page-header">
       <div class="header-left">
+        <a-button type="text" @click="goToDashboard" style="margin-right: 12px;">
+          <template #icon><ArrowLeftOutlined /></template>
+        </a-button>
         <h2>用户管理</h2>
         <span class="subtitle">共 {{ totalUsers }} 个用户</span>
       </div>
@@ -229,9 +232,13 @@ import dayjs from 'dayjs';
 import {
   PlusOutlined,
   ReloadOutlined,
-  SearchOutlined
+  SearchOutlined,
+  ArrowLeftOutlined
 } from '@ant-design/icons-vue';
+import { useRouter } from 'vue-router';
 import adminUserApi from '@/api/admin/user';
+
+const router = useRouter();
 
 // 默认头像
 const defaultAvatar = '/default-avatar.png';
@@ -475,6 +482,11 @@ const fetchUsers = async () => {
   }
 };
 
+// 返回dashboard
+const goToDashboard = () => {
+  router.push('/admin/dashboard');
+};
+
 // 搜索处理
 const handleSearch = () => {
   currentPage.value = 1;
@@ -702,7 +714,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .user-management {
-  padding: 20px;
+  padding: 24px 12%;
 
   .page-header {
     display: flex;
@@ -769,7 +781,7 @@ onMounted(() => {
 // 响应式设计
 @media screen and (max-width: 768px) {
   .user-management {
-    padding: 10px;
+    padding: 12px 5%;
 
     .page-header {
       flex-direction: column;

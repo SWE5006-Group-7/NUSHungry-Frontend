@@ -31,23 +31,15 @@
           <el-menu-item index="/admin/users/roles">角色管理</el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="cafeterias">
-          <template #title>
-            <el-icon><Shop /></el-icon>
-            <span>食堂管理</span>
-          </template>
-          <el-menu-item index="/admin/cafeterias">食堂列表</el-menu-item>
-          <el-menu-item index="/admin/cafeterias/add">添加食堂</el-menu-item>
-        </el-sub-menu>
+        <el-menu-item index="/admin/cafeterias">
+          <el-icon><Shop /></el-icon>
+          <template #title>食堂管理</template>
+        </el-menu-item>
 
-        <el-sub-menu index="stalls">
-          <template #title>
-            <el-icon><Dish /></el-icon>
-            <span>摊位管理</span>
-          </template>
-          <el-menu-item index="/admin/stalls">摊位列表</el-menu-item>
-          <el-menu-item index="/admin/stalls/merchants">商家分配</el-menu-item>
-        </el-sub-menu>
+        <el-menu-item index="/admin/stalls">
+          <el-icon><Dish /></el-icon>
+          <template #title>摊位管理</template>
+        </el-menu-item>
 
         <el-sub-menu index="reviews">
           <template #title>
