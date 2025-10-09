@@ -27,8 +27,10 @@
                   position: 'relative'
                 }"
               >
-                <!-- Rating from mock data -->
-                <a-tag color="gold" style="position:absolute; top: 12px; right: 12px">4.5</a-tag>
+                <!-- Real rating -->
+                <a-tag v-if="stall.averageRating" color="gold" style="position:absolute; top: 12px; right: 12px">
+                  {{ stall.averageRating.toFixed(1) }}
+                </a-tag>
               </div>
 
               <div style="padding: 16px 8px 0 8px;">
@@ -49,17 +51,19 @@
                   </a-button>
                 </div>
                 <a-space direction="vertical" size="small" style="margin-top: 8px;">
-                  <!-- Opening hours not in Stall model -->
                   <a-typography-text type="secondary">7:00 AM - 9:00 PM</a-typography-text>
                   <a-space>
                     <a-tag>{{ stall.cuisineType }}</a-tag>
                   </a-space>
                   <a-space>
-                    <!-- Rating and reviews count from mock data -->
-                    <a-typography-text strong style="color:#f7931e">4.5</a-typography-text>
-                    <a-typography-text type="secondary">· {{ reviews.length }} reviews</a-typography-text>
+                    <!-- Real rating and review count -->
+                    <a-typography-text strong style="color:#f7931e">
+                      {{ stall.averageRating ? stall.averageRating.toFixed(1) : 'No rating yet' }}
+                    </a-typography-text>
+                    <a-typography-text type="secondary">
+                      · {{ stall.reviewCount || 0 }} reviews
+                    </a-typography-text>
                   </a-space>
-                  <!-- Avg price not in Stall model -->
                   <a-typography-text type="secondary">Average price: $10-15</a-typography-text>
                 </a-space>
               </div>
@@ -81,7 +85,6 @@
                 </div>
               </template>
 
-              <!-- 图片展示 - 使用新的 ImageGallery 组件 -->
               <ImageGallery
                 :images="displayImages"
                 :columns="3"
@@ -89,11 +92,10 @@
                 :max-display="6"
                 show-load-more
                 use-thumbnail
-                empty-text="暂无照片，快来分享第一张吧！"
+                empty-text="There are no photos yet, please share the first one!"
               />
             </a-card>
 
-            <!-- Menu 模块 -->
             <a-card :style="cardStyle" style="margin-top: 16px;" :body-style="{ padding: '16px' }">
               <template #title>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -110,7 +112,6 @@
                 </div>
               </template>
 
-              <!-- 菜单图片展示 - 使用 ImageGallery 组件 -->
               <ImageGallery
                 :images="menuImages"
                 :columns="3"
@@ -118,16 +119,16 @@
                 :max-display="6"
                 show-load-more
                 use-thumbnail
-                empty-text="暂无菜单图片，快来分享第一张吧！"
+                empty-text="There is no menu picture yet, please share the first one!"
               />
             </a-card>
           </a-col>
 
-          <!-- Right: Menu & Reviews -->
+          <!-- Right: Location & Reviews -->
           <a-col :xs="24" :lg="10">
             <a-card :style="cardStyle" :body-style="{ padding: '16px' }">
               <template #title>
-                <a-tag color="purple-inverse">MENU & REVIEWS</a-tag>
+                <a-tag color="purple-inverse">LOCATION & INFO</a-tag>
               </template>
 
               <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -142,40 +143,66 @@
                   <MapSection :markers="[{ lat: stall.cafeteria.latitude, lng: stall.cafeteria.longitude, label: stall.name }]" height="180px" />
                 </div>
               </a-card>
+            </a-card>
 
-              <a-typography-title :level="5" style="margin-bottom: 12px;">Menu</a-typography-title>
-              <!-- Menu data is not available from backend -->
-              <a-typography-text type="secondary">Menu information is not available at the moment.</a-typography-text>
+            <!-- Review List Card -->
+            <a-card :style="cardStyle" style="margin-top: 16px;" :body-style="{ padding: '16px' }">
+              <template #title>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <a-tag color="orange-inverse">REVIEWS</a-tag>
+                    <span v-if="reviewListRef?.total > 0" style="color: #64748b; font-size: 14px; font-weight: normal;">
+                      ({{ reviewListRef?.total }})
+                    </span>
+                  </div>
+                  <a-button
+                    v-if="isAuthenticated"
+                    type="primary"
+                    size="small"
+                    @click="handleWriteReview"
+                  >
+                    <template #icon><EditOutlined /></template>
+                    Write Review
+                  </a-button>
+                </div>
+              </template>
 
-              <div style="margin-top: 16px;">
-                <a-typography-title :level="5" style="margin-bottom: 8px;">Reviews ({{ reviews.length }})</a-typography-title>
-                <ReviewCard v-for="r in reviews" :key="r.id" :review="r" />
-              </div>
+              <!-- Use ReviewList Component -->
+              <ReviewList
+                ref="reviewListRef"
+                :stall-id="parseInt(route.params.id)"
+                :show-write-button="false"
+                :show-rating-stats="true"
+                :average-rating="stall.averageRating || 0"
+                @review-created="handleReviewCreated"
+                @review-updated="handleReviewUpdated"
+                @review-deleted="handleReviewDeleted"
+              />
             </a-card>
           </a-col>
         </a-row>
       </div>
     </a-layout-content>
 
-    <!-- 摊位图片上传对话框 -->
+    <!-- Stall Image Upload Dialog -->
     <ImageUploadDialog
       v-model:open="uploadDialogVisible"
-      title="上传摊位图片"
+      title="Upload Stall Photos"
       :max-count="9"
-      main-text="点击或拖拽上传图片"
-      sub-text="支持 JPG、PNG、GIF、WebP 格式，最多9张"
-      tip="提示：图片将自动压缩优化，上传前可以预览和删除"
+      main-text="Click or drag to upload photos"
+      sub-text="Supports JPG, PNG, GIF, WebP formats, up to 9 images"
+      tip="Tip: Images will be automatically compressed and optimized. You can preview and delete them before uploading."
       @confirm="handleUploadConfirm"
     />
 
-    <!-- 菜单图片上传对话框 -->
+    <!-- Menu Image Upload Dialog -->
     <ImageUploadDialog
       v-model:open="menuUploadDialogVisible"
-      title="上传菜单图片"
+      title="Upload Menu Photos"
       :max-count="9"
-      main-text="点击或拖拽上传菜单图片"
-      sub-text="支持 JPG、PNG、GIF、WebP 格式，最多9张"
-      tip="提示：图片将自动压缩优化，上传前可以预览和删除"
+      main-text="Click or drag to upload menu photos"
+      sub-text="Supports JPG, PNG, GIF, WebP formats, up to 9 images"
+      tip="Tip: Images will be automatically compressed and optimized. You can preview and delete them before uploading."
       @confirm="handleMenuUploadConfirm"
     />
   </a-layout>
@@ -188,9 +215,9 @@ import { useStallStore } from '@/stores/stall'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
-import { UploadOutlined } from '@ant-design/icons-vue'
+import { UploadOutlined, EditOutlined } from '@ant-design/icons-vue'
 import Header from '@/components/Header.vue'
-import ReviewCard from '@/components/ReviewCard.vue'
+import ReviewList from '@/components/ReviewList.vue'
 import MapSection from '@/components/MapSection.vue'
 import ImageGallery from '@/components/ImageGallery.vue'
 import ImageUploadDialog from '@/components/ImageUploadDialog.vue'
@@ -202,16 +229,19 @@ const route = useRoute()
 const router = useRouter()
 const stallStore = useStallStore()
 const userStore = useUserStore()
-const { currentStall: stall, reviews, loading, error } = storeToRefs(stallStore)
+const { currentStall: stall, loading, error } = storeToRefs(stallStore)
 const { userId, isAuthenticated } = storeToRefs(userStore)
 
-// 图片相关状态
+// Image related state
 const uploadDialogVisible = ref(false)
 const menuUploadDialogVisible = ref(false)
 const isFavorite = ref(false)
 
-// 显示的图片列表（转换为 ImageGallery 需要的格式）
-// 普通照片（PHOTO类型）
+// Review list reference
+const reviewListRef = ref(null)
+
+// Displayed image list (converted to the format required by ImageGallery)
+// Normal photos (PHOTO type)
 const photoImages = computed(() => {
   if (!stall.value?.images) return []
   return stall.value.images
@@ -223,7 +253,7 @@ const photoImages = computed(() => {
     }))
 })
 
-// 菜单图片（MENU类型）
+// Menu images (MENU type)
 const menuImages = computed(() => {
   if (!stall.value?.images) return []
   return stall.value.images
@@ -235,15 +265,14 @@ const menuImages = computed(() => {
     }))
 })
 
-// 为了兼容旧代码，保留displayImages（指向photoImages）
+// For compatibility with old code, keep displayImages (points to photoImages)
 const displayImages = photoImages
 
 onMounted(async () => {
   const stallId = route.params.id
-  stallStore.fetchStallById(stallId)
-  stallStore.fetchReviewsByStallId(stallId)
+  await stallStore.fetchStallById(stallId)
 
-  // 检查是否已收藏（仅当用户已登录时）
+  // Check if it's a favorite (only when user is logged in)
   if (isAuthenticated.value && userId.value) {
     try {
       isFavorite.value = await favoriteService.checkFavorite(userId.value, stallId)
@@ -255,9 +284,8 @@ onMounted(async () => {
 
 const goBack = () => router.back()
 
-// 收藏功能
+// Favorite function
 const toggleFavorite = async () => {
-  // 检查用户是否已登录
   if (!isAuthenticated.value || !userId.value) {
     message.warning('Please login to add favorites')
     router.push('/login')
@@ -280,66 +308,71 @@ const toggleFavorite = async () => {
   }
 }
 
-// 显示上传对话框
+// Show upload dialog
 const showUploadDialog = () => {
   uploadDialogVisible.value = true
 }
 
-// 显示菜单上传对话框
+// Show menu upload dialog
 const showMenuUploadDialog = () => {
   menuUploadDialogVisible.value = true
 }
 
-// 图片上传确认处理
+// Image upload confirmation handler
 const handleUploadConfirm = async (result) => {
-  console.log('上传结果:', result)
-
   try {
-    // 调用关联接口，将图片关联到摊位（PHOTO类型）
     await imageService.linkImagesToStall(
       route.params.id,
       result.imageUrls,
       result.thumbnailUrls,
       'PHOTO'
     )
-
-    message.success('图片已成功关联到摊位！')
-
-    // 重新加载摊位数据以更新图片列表
+    message.success('Images have been successfully linked to the stall!')
     await stallStore.fetchStallById(route.params.id)
-
   } catch (error) {
-    console.error('关联图片失败:', error)
-    message.error('关联图片失败，请重试')
+    console.error('Failed to link images:', error)
+    message.error('Failed to link images, please try again')
   }
 }
 
-// 菜单图片上传确认处理
+// Menu image upload confirmation handler
 const handleMenuUploadConfirm = async (result) => {
-  console.log('上传菜单图片结果:', result)
-
   try {
-    // 调用关联接口，将菜单图片关联到摊位（MENU类型）
     await imageService.linkMenuImagesToStall(
       route.params.id,
       result.imageUrls,
       result.thumbnailUrls
     )
-
-    message.success('菜单图片已成功关联到摊位！')
-
-    // 重新加载摊位数据以更新图片列表
+    message.success('Menu images have been successfully linked to the stall!')
     await stallStore.fetchStallById(route.params.id)
-
   } catch (error) {
-    console.error('关联菜单图片失败:', error)
-    message.error('关联菜单图片失败，请重试')
+    console.error('Failed to link menu images:', error)
+    message.error('Failed to link menu images, please try again')
   }
 }
 
-// 图片点击处理由 ImageGallery 组件自动处理，会打开 ImageViewer
+// Handle review created/updated/deleted events
+const handleReviewCreated = async () => {
+  // Reload stall info to update rating stats
+  await stallStore.fetchStallById(route.params.id)
+}
 
-// 导航功能
+const handleReviewUpdated = async () => {
+  await stallStore.fetchStallById(route.params.id)
+}
+
+const handleReviewDeleted = async () => {
+  await stallStore.fetchStallById(route.params.id)
+}
+
+// Handle write review button click
+const handleWriteReview = () => {
+  if (reviewListRef.value) {
+    reviewListRef.value.handleWriteReview()
+  }
+}
+
+// Navigation function
 const openNavigation = () => {
   if (!stall.value?.cafeteria) return
 
@@ -347,18 +380,14 @@ const openNavigation = () => {
   const lng = stall.value.cafeteria.longitude
   const label = encodeURIComponent(stall.value.cafeteria.name)
 
-  // 检测用户设备/浏览器，打开相应的地图应用
   const userAgent = navigator.userAgent || navigator.vendor || window.opera
 
-  // iOS 设备
   if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
     window.open(`maps://maps.apple.com/?q=${label}&ll=${lat},${lng}`)
   }
-  // Android 设备
   else if (/android/i.test(userAgent)) {
     window.open(`geo:${lat},${lng}?q=${lat},${lng}(${label})`)
   }
-  // 桌面端，使用 Google Maps
   else {
     window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank')
   }
@@ -369,21 +398,4 @@ const cardStyle = {
   boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
   border: '1px solid rgba(0,0,0,0.03)'
 }
-
-// Map handled by MapSection
-
-const menuItemStyle = {
-  background: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-  overflow: 'hidden',
-  border: '1px solid rgba(0,0,0,0.04)'
-}
-
-const menuImgStyle = (url) => ({
-  height: '120px',
-  backgroundImage: `url(${url})`,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center'
-})
 </script>

@@ -86,6 +86,14 @@
       <InfoCircleOutlined style="margin-right: 4px" />
       {{ tip }}
     </div>
+
+    <!-- 图片查看器 -->
+    <ImageViewer
+      :visible="viewerVisible"
+      :images="viewerImages"
+      :initial-index="viewerInitialIndex"
+      @close="viewerVisible = false"
+    />
   </div>
 </template>
 
@@ -101,6 +109,7 @@ import {
   InfoCircleOutlined
 } from '@ant-design/icons-vue'
 import { uploadService } from '@/services/uploadService'
+import ImageViewer from './ImageViewer.vue'
 
 const props = defineProps({
   // v-model 绑定的图片URL列表
@@ -181,6 +190,11 @@ const isDragOver = ref(false)
 const uploading = ref(false)
 const uploadProgress = ref(0)
 const previewList = ref([])
+
+// 图片查看器状态
+const viewerVisible = ref(false)
+const viewerImages = ref([])
+const viewerInitialIndex = ref(0)
 
 // 计算属性
 const isMaxReached = computed(() => {
@@ -365,6 +379,18 @@ const uploadMultipleFiles = async (files) => {
 
 // 预览图片
 const handlePreview = (item) => {
+  // 打开图片查看器
+  viewerImages.value = previewList.value
+    .filter(i => i.status === 'done')
+    .map(i => i.url)
+
+  viewerInitialIndex.value = previewList.value
+    .filter(i => i.status === 'done')
+    .findIndex(i => i.uid === item.uid)
+
+  viewerVisible.value = true
+
+  // 也触发 preview 事件供父组件使用
   emit('preview', item)
 }
 

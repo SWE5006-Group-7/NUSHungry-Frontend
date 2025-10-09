@@ -79,7 +79,7 @@
                 :max-display="8"
                 show-load-more
                 use-thumbnail
-                empty-text="暂无照片，快来分享第一张吧！"
+                empty-text="There are no photos yet, please share the first one!"
               />
             </a-card>
           </a-col>
