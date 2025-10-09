@@ -57,39 +57,30 @@
             </a-card>
 
             <a-card :style="cardStyle" style="margin-top: 16px;" :body-style="{ padding: '16px' }">
-              <a-typography-title :level="5" style="margin-top:0">Photos from Visitors</a-typography-title>
+              <template #title>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <a-typography-title :level="5" style="margin:0">Photos from Visitors</a-typography-title>
+                  <a-button
+                    type="primary"
+                    size="small"
+                    @click="showUploadDialog"
+                  >
+                    <template #icon><UploadOutlined /></template>
+                    Upload Photos
+                  </a-button>
+                </div>
+              </template>
 
-              <!-- 图片上传 -->
-              <a-upload
-                :before-upload="beforeUpload"
-                :custom-request="handleUploadCafeteriaImage"
-                :show-upload-list="false"
-                accept="image/*"
-              >
-                <a-button type="primary" style="margin-bottom: 16px;">
-                  <template #icon><UploadOutlined /></template>
-                  Upload Photo
-                </a-button>
-              </a-upload>
-
-              <!-- 图片展示 -->
-              <div v-if="customerImages.length > 0" style="display: flex; gap: 12px; overflow-x: auto; padding: 8px 0;">
-                <div
-                  v-for="img in customerImages"
-                  :key="img.id"
-                  :style="{
-                    minWidth: '150px',
-                    height: '150px',
-                    borderRadius: '8px',
-                    backgroundImage: `url(${getResourceUrl(img.imageUrl)})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    cursor: 'pointer'
-                  }"
-                  @click="previewImage(img.imageUrl)"
-                />
-              </div>
-              <a-typography-text v-else type="secondary">No photos yet. Be the first to share!</a-typography-text>
+              <!-- 图片展示 - 使用新的 ImageGallery 组件 -->
+              <ImageGallery
+                :images="displayImages"
+                :columns="4"
+                item-height="200px"
+                :max-display="8"
+                show-load-more
+                use-thumbnail
+                empty-text="暂无照片，快来分享第一张吧！"
+              />
             </a-card>
           </a-col>
 
@@ -141,8 +132,19 @@
         </a-row>
       </div>
     </a-layout-content>
+
+    <!-- 图片上传对话框 -->
+    <ImageUploadDialog
+      v-model:open="uploadDialogVisible"
+      title="上传食堂图片"
+      :max-count="9"
+      main-text="点击或拖拽上传图片"
+      sub-text="支持 JPG、PNG、GIF、WebP 格式，最多9张"
+      tip="提示：图片将自动压缩优化，上传前可以预览和删除"
+      @confirm="handleUploadConfirm"
+    />
   </a-layout>
-  
+
 </template>
 
 <script setup>
@@ -154,6 +156,8 @@ import { message } from 'ant-design-vue'
 import { UploadOutlined } from '@ant-design/icons-vue'
 import Header from '@/components/Header.vue'
 import MapSection from '@/components/MapSection.vue'
+import ImageGallery from '@/components/ImageGallery.vue'
+import ImageUploadDialog from '@/components/ImageUploadDialog.vue'
 import { imageService } from '@/services/imageService'
 import { getResourceUrl } from '@/utils/config'
 
@@ -162,7 +166,18 @@ const router = useRouter()
 const cafeteriaStore = useCafeteriaStore()
 const { currentCafeteria: cafeteria, loading, error } = storeToRefs(cafeteriaStore)
 
-const customerImages = computed(() => cafeteria.value?.images || [])
+// 图片相关状态
+const uploadDialogVisible = ref(false)
+
+// 显示的图片列表（转换为 ImageGallery 需要的格式）
+const displayImages = computed(() => {
+  if (!cafeteria.value?.images) return []
+  return cafeteria.value.images.map(img => ({
+    id: img.id,
+    url: getResourceUrl(img.imageUrl),
+    thumbnailUrl: img.thumbnailUrl ? getResourceUrl(img.thumbnailUrl) : null
+  }))
+})
 
 onMounted(() => {
   cafeteriaStore.fetchCafeteriaById(route.params.id)
@@ -171,38 +186,35 @@ onMounted(() => {
 const goBack = () => router.back()
 const goStall = (id) => router.push({ name: 'StallDetail', params: { id } })
 
-// 图片上传
-const beforeUpload = (file) => {
-  const isImage = file.type.startsWith('image/')
-  if (!isImage) {
-    message.error('You can only upload image files!')
-    return false
-  }
-  const isLt5M = file.size / 1024 / 1024 < 5
-  if (!isLt5M) {
-    message.error('Image must be smaller than 5MB!')
-    return false
-  }
-  return true
+// 显示上传对话框
+const showUploadDialog = () => {
+  uploadDialogVisible.value = true
 }
 
-const handleUploadCafeteriaImage = async ({ file }) => {
+// 图片上传确认处理
+const handleUploadConfirm = async (result) => {
+  console.log('上传结果:', result)
+
   try {
-    // 这里使用临时用户ID，实际应该从认证系统获取
-    const userId = 'guest-' + Date.now()
-    await imageService.uploadCafeteriaImage(route.params.id, file, userId)
-    message.success('Image uploaded successfully!')
-    // 重新加载数据
-    cafeteriaStore.fetchCafeteriaById(route.params.id)
+    // 调用关联接口，将图片关联到食堂
+    await imageService.linkImagesToCafeteria(
+      route.params.id,
+      result.imageUrls,
+      result.thumbnailUrls
+    )
+
+    message.success('图片已成功关联到食堂！')
+
+    // 重新加载食堂数据以更新图片列表
+    await cafeteriaStore.fetchCafeteriaById(route.params.id)
+
   } catch (error) {
-    message.error('Failed to upload image')
-    console.error(error)
+    console.error('关联图片失败:', error)
+    message.error('关联图片失败，请重试')
   }
 }
 
-const previewImage = (imageUrl) => {
-  window.open(getResourceUrl(imageUrl), '_blank')
-}
+// 图片点击处理由 ImageGallery 组件自动处理，会打开 ImageViewer
 
 // 导航功能
 const openNavigation = () => {
