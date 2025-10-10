@@ -41,14 +41,10 @@
           <template #title>摊位管理</template>
         </el-menu-item>
 
-        <el-sub-menu index="reviews">
-          <template #title>
-            <el-icon><Comment /></el-icon>
-            <span>内容审核</span>
-          </template>
-          <el-menu-item index="/admin/reviews">评价审核</el-menu-item>
-          <el-menu-item index="/admin/reviews/reports">举报处理</el-menu-item>
-        </el-sub-menu>
+        <el-menu-item index="/admin/moderation">
+          <el-icon><Comment /></el-icon>
+          <template #title>内容审核</template>
+        </el-menu-item>
 
         <el-menu-item index="/admin/statistics">
           <el-icon><DataAnalysis /></el-icon>

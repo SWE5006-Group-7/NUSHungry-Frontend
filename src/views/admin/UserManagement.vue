@@ -720,26 +720,29 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 
     .header-left {
+      display: flex;
+      align-items: center;
+
       h2 {
-        font-size: 24px;
-        color: #303133;
         margin: 0;
-        display: inline-block;
+        font-size: 24px;
+        font-weight: 600;
+        color: #262626;
       }
 
       .subtitle {
-        color: #909399;
+        margin-left: 16px;
+        color: #8c8c8c;
         font-size: 14px;
-        margin-left: 12px;
       }
     }
 
     .header-right {
       display: flex;
-      gap: 10px;
+      gap: 12px;
     }
   }
 

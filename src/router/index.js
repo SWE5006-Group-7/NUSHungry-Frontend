@@ -11,6 +11,7 @@ import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 import UserManagement from '@/views/admin/UserManagement.vue'
 import CafeteriaManagement from '@/views/admin/CafeteriaManagement.vue'
 import StallManagement from '@/views/admin/StallManagement.vue'
+import ContentModeration from '@/views/admin/ContentModeration.vue'
 import ChangePassword from '@/views/admin/ChangePassword.vue'
 import TokenDebug from '@/views/admin/TokenDebug.vue'
 import authService from '@/services/authService'
@@ -89,6 +90,12 @@ const routes = [
     path: '/admin/stalls',
     name: 'StallManagement',
     component: StallManagement,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/moderation',
+    name: 'ContentModeration',
+    component: ContentModeration,
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {

@@ -386,10 +386,14 @@ onMounted(() => {
     margin-bottom: 24px;
 
     .header-left {
+      display: flex;
+      align-items: center;
+
       h2 {
         margin: 0;
         font-size: 24px;
         font-weight: 600;
+        color: #262626;
       }
 
       .subtitle {

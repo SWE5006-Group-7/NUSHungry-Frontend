@@ -518,9 +518,12 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 
     .header-left {
+      display: flex;
+      align-items: center;
+
       h2 {
         margin: 0;
         font-size: 24px;
@@ -528,15 +531,15 @@ onMounted(() => {
       }
 
       .subtitle {
-        color: rgba(0, 0, 0, 0.45);
+        margin-left: 16px;
+        color: #8c8c8c;
         font-size: 14px;
-        margin-left: 12px;
       }
     }
 
     .header-right {
       display: flex;
-      gap: 10px;
+      gap: 12px;
     }
   }
 
