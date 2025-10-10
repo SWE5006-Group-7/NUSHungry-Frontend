@@ -122,6 +122,7 @@ function returnToUserLocation() {
 }
 
 const wrapperStyle = {
+  position: 'relative',
   background: 'white',
   borderRadius: '20px',
   padding: '8px',

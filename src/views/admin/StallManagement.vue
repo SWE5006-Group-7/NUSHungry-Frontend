@@ -74,6 +74,7 @@
         @change="handleTableChange"
         :row-key="record => record.id"
         :row-selection="rowSelection"
+        :scroll="{ x: 1200 }"
       >
         <!-- 摊位名称 -->
         <template #bodyCell="{ column, record }">
@@ -95,14 +96,6 @@
               {{ record.cafeteria.name }}
             </a-tag>
             <a-tag v-else color="default">未分配</a-tag>
-          </template>
-
-          <!-- Halal信息 -->
-          <template v-else-if="column.key === 'halalInfo'">
-            <a-tag v-if="record.halalInfo" color="green">
-              {{ record.halalInfo }}
-            </a-tag>
-            <span v-else>-</span>
           </template>
 
           <!-- 评分 -->
@@ -282,11 +275,6 @@ const columns = [
   {
     title: '所属食堂',
     key: 'cafeteria',
-    width: 150
-  },
-  {
-    title: 'Halal信息',
-    key: 'halalInfo',
     width: 150
   },
   {

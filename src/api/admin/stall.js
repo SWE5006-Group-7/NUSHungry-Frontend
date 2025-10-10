@@ -1,4 +1,5 @@
 import request from '@/utils/request';
+import debugStallUpdate from '@/utils/stallDebugger';
 
 const adminStallApi = {
   // 获取摊位列表
@@ -29,10 +30,32 @@ const adminStallApi = {
 
   // 更新摊位信息
   updateStall(id, data) {
+    // 调试：API请求
+    debugStallUpdate('API_REQUEST', {
+      method: 'PUT',
+      url: `/admin/stalls/${id}`,
+      requestData: data
+    });
+
     return request({
       url: `/admin/stalls/${id}`,
       method: 'put',
       data
+    }).then(response => {
+      // 调试：API响应
+      debugStallUpdate('API_RESPONSE', {
+        status: response.status,
+        responseData: response.data
+      });
+      return response;
+    }).catch(error => {
+      // 调试：API错误
+      debugStallUpdate('API_ERROR', {
+        status: error.response?.status,
+        error: error.message,
+        fullError: error
+      });
+      throw error;
     });
   },
 

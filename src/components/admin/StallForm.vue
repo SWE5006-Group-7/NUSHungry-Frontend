@@ -161,6 +161,7 @@ import { ref, reactive, watch, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
 import { StarFilled } from '@ant-design/icons-vue';
 import adminCafeteriaApi from '@/api/admin/cafeteria';
+import debugStallUpdate from '@/utils/stallDebugger';
 
 // Props
 const props = defineProps({
@@ -283,6 +284,9 @@ const handleSubmit = async () => {
       contact: formData.contact,
       imageUrl: formData.imageUrl
     };
+
+    // 调试：表单提交
+    debugStallUpdate('FORM_SUBMIT', { formData, submitData });
 
     // 触发提交事件
     emit('submit', {

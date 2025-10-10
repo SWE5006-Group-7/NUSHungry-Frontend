@@ -30,6 +30,7 @@
         :pagination="pagination"
         @change="handleTableChange"
         :row-key="record => record.id"
+        :scroll="{ x: 1200 }"
       >
         <!-- 食堂名称 -->
         <template #bodyCell="{ column, record }">
