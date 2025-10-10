@@ -4,6 +4,7 @@ import CafeteriaDetail from '@/pages/CafeteriaDetail.vue'
 import StallDetail from '@/pages/StallDetail.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
+import ForgotPassword from '@/pages/ForgotPassword.vue'
 import ProfilePage from '@/pages/ProfilePage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 import AdminLogin from '@/views/admin/AdminLogin.vue'
@@ -43,6 +44,12 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: RegisterPage,
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword,
     meta: { requiresGuest: true }
   },
   {
