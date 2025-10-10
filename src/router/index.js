@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/pages/HomePage.vue'
+import SearchResults from '@/pages/SearchResults.vue'
 import CafeteriaDetail from '@/pages/CafeteriaDetail.vue'
 import StallDetail from '@/pages/StallDetail.vue'
 import LoginPage from '@/pages/LoginPage.vue'
@@ -23,6 +24,11 @@ const routes = [
     path: '/',
     name: 'Home',
     component: HomePage
+  },
+  {
+    path: '/search',
+    name: 'SearchResults',
+    component: SearchResults
   },
   {
     path: '/canteens/:id',

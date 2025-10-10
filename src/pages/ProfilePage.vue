@@ -77,6 +77,43 @@
               <HeartOutlined class="section-icon" />
             </div>
             <h2 class="section-title">我的收藏</h2>
+            <div class="section-actions">
+              <a-button
+                v-if="!batchMode && favorites.length > 0"
+                type="primary"
+                size="small"
+                @click="toggleBatchMode"
+              >
+                批量管理
+              </a-button>
+              <template v-if="batchMode">
+                <a-button
+                  type="default"
+                  size="small"
+                  @click="toggleSelectAll"
+                >
+                  <CheckOutlined v-if="!isAllSelected" />
+                  <CloseOutlined v-else />
+                  {{ isAllSelected ? '取消全选' : '全选' }}
+                </a-button>
+                <a-button
+                  type="primary"
+                  danger
+                  size="small"
+                  :disabled="selectedFavorites.length === 0"
+                  @click="handleBatchDelete"
+                >
+                  删除 ({{ selectedFavorites.length }})
+                </a-button>
+                <a-button
+                  type="default"
+                  size="small"
+                  @click="toggleBatchMode"
+                >
+                  取消
+                </a-button>
+              </template>
+            </div>
           </div>
           <a-spin :spinning="loadingFavorites">
             <div v-if="favorites.length === 0" class="empty-state">
@@ -86,42 +123,72 @@
                 </template>
               </a-empty>
             </div>
-            <div v-else class="favorites-grid">
-              <div
-                v-for="favorite in favorites"
-                :key="favorite.id"
-                class="favorite-card"
-                @click="goToStall(favorite.stallId)"
-              >
-                <div class="favorite-image">
-                  <img
-                    v-if="favorite.stallImage"
-                    :src="favorite.stallImage"
-                    :alt="favorite.stallName"
-                  />
-                  <div v-else class="placeholder-image">
-                    <ShopOutlined />
-                  </div>
-                </div>
-                <div class="favorite-content">
-                  <div class="favorite-header">
-                    <h3 class="favorite-name">{{ favorite.stallName }}</h3>
-                    <HeartFilled class="favorite-icon" />
-                  </div>
-                  <p class="favorite-location">{{ favorite.cafeteriaName }}</p>
-                  <div class="favorite-actions">
-                    <a-button
-                      type="text"
-                      danger
-                      size="small"
-                      @click.stop="handleRemoveFavorite(favorite.id)"
-                      class="remove-btn"
-                    >
-                      取消收藏
-                    </a-button>
-                  </div>
-                </div>
+            <div v-else class="favorites-container">
+              <!-- 拖拽排序提示 -->
+              <div v-if="!batchMode && favorites.length > 1" class="drag-hint">
+                <DragOutlined /> 拖拽卡片可调整顺序
               </div>
+
+              <draggable
+                v-model="fullFavorites"
+                :disabled="batchMode"
+                item-key="id"
+                class="favorites-grid"
+                :class="{ 'is-dragging': isDragging, 'batch-mode': batchMode }"
+                @start="handleDragStart"
+                @end="handleDragEnd"
+              >
+                <template #item="{ element }">
+                  <div
+                    :key="element.id"
+                    class="favorite-card"
+                    :class="{
+                      'is-selected': selectedFavorites.includes(element.id),
+                      'batch-mode': batchMode
+                    }"
+                    @click="batchMode ? toggleSelectFavorite(element.id) : goToStall(element.stall.id)"
+                  >
+                    <!-- 批量选择复选框 -->
+                    <div v-if="batchMode" class="favorite-checkbox" @click.stop="toggleSelectFavorite(element.id)">
+                      <a-checkbox :checked="selectedFavorites.includes(element.id)" />
+                    </div>
+
+                    <!-- 拖拽手柄 -->
+                    <div v-if="!batchMode" class="drag-handle">
+                      <DragOutlined />
+                    </div>
+
+                    <div class="favorite-image">
+                      <img
+                        v-if="element.stall.imageUrls && element.stall.imageUrls[0]"
+                        :src="element.stall.imageUrls[0]"
+                        :alt="element.stall.name"
+                      />
+                      <div v-else class="placeholder-image">
+                        <ShopOutlined />
+                      </div>
+                    </div>
+                    <div class="favorite-content">
+                      <div class="favorite-header">
+                        <h3 class="favorite-name">{{ element.stall.name }}</h3>
+                        <HeartFilled class="favorite-icon" />
+                      </div>
+                      <p class="favorite-location">{{ element.stall.cafeteria?.name || '' }}</p>
+                      <div v-if="!batchMode" class="favorite-actions">
+                        <a-button
+                          type="text"
+                          danger
+                          size="small"
+                          @click.stop="handleRemoveFavorite(element.id)"
+                          class="remove-btn"
+                        >
+                          取消收藏
+                        </a-button>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </draggable>
             </div>
           </a-spin>
         </div>
@@ -131,9 +198,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import {
   UserOutlined,
   HeartFilled,
@@ -141,19 +208,36 @@ import {
   ShopOutlined,
   ClockCircleOutlined,
   StarOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  DragOutlined,
+  CheckOutlined,
+  CloseOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import authService from '@/services/authService'
+import { favoriteService } from '@/services/favoriteService'
 import Header from '@/components/Header.vue'
+import draggable from 'vuedraggable'
 
 const router = useRouter()
 const userStore = useUserStore()
 
 const reviews = ref([])
 const favorites = ref([])
+const fullFavorites = ref([]) // 完整的Favorite对象（包含ID和sortOrder）
 const loadingReviews = ref(false)
 const loadingFavorites = ref(false)
+
+// 批量管理相关
+const batchMode = ref(false)
+const selectedFavorites = ref([])
+const isDragging = ref(false)
+
+// 计算属性：是否全选
+const isAllSelected = computed(() => {
+  return fullFavorites.value.length > 0 &&
+         selectedFavorites.value.length === fullFavorites.value.length
+})
 
 // 加载用户评价
 const loadReviews = async () => {
@@ -173,8 +257,24 @@ const loadReviews = async () => {
 const loadFavorites = async () => {
   try {
     loadingFavorites.value = true
-    const data = await authService.getUserFavorites()
-    favorites.value = data
+    const userId = userStore.user?.id || userStore.userId
+    if (!userId) {
+      message.error('用户未登录')
+      return
+    }
+
+    // 获取完整的Favorite对象（包含ID和sortOrder）
+    const data = await favoriteService.getUserFavoritesFull(userId.toString())
+    fullFavorites.value = data
+
+    // 转换为显示用的格式
+    favorites.value = data.map(fav => ({
+      id: fav.id,
+      stallId: fav.stall.id,
+      stallName: fav.stall.name,
+      stallImage: fav.stall.imageUrls?.[0] || '',
+      cafeteriaName: fav.stall.cafeteria?.name || ''
+    }))
   } catch (error) {
     message.error('加载收藏失败')
     console.error('Load favorites error:', error)
@@ -189,10 +289,100 @@ const handleDeleteReview = async (reviewId) => {
   message.warning('删除评价功能待实现')
 }
 
-// 取消收藏
+// 切换批量管理模式
+const toggleBatchMode = () => {
+  batchMode.value = !batchMode.value
+  if (!batchMode.value) {
+    selectedFavorites.value = []
+  }
+}
+
+// 全选/取消全选
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    selectedFavorites.value = []
+  } else {
+    selectedFavorites.value = fullFavorites.value.map(f => f.id)
+  }
+}
+
+// 切换单个收藏的选择状态
+const toggleSelectFavorite = (favoriteId) => {
+  const index = selectedFavorites.value.indexOf(favoriteId)
+  if (index > -1) {
+    selectedFavorites.value.splice(index, 1)
+  } else {
+    selectedFavorites.value.push(favoriteId)
+  }
+}
+
+// 批量删除收藏
+const handleBatchDelete = async () => {
+  if (selectedFavorites.value.length === 0) {
+    message.warning('请至少选择一个收藏')
+    return
+  }
+
+  Modal.confirm({
+    title: '确认删除',
+    content: `确定要删除选中的 ${selectedFavorites.value.length} 个收藏吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        const userId = userStore.user?.id || userStore.userId
+        await favoriteService.batchDeleteFavorites(userId.toString(), selectedFavorites.value)
+        message.success('批量删除成功')
+        selectedFavorites.value = []
+        batchMode.value = false
+        await loadFavorites()
+      } catch (error) {
+        message.error('批量删除失败')
+        console.error('Batch delete error:', error)
+      }
+    }
+  })
+}
+
+// 取消单个收藏
 const handleRemoveFavorite = async (favoriteId) => {
-  // TODO: 实现取消收藏的API
-  message.warning('取消收藏功能待实现')
+  Modal.confirm({
+    title: '确认取消收藏',
+    content: '确定要取消这个收藏吗？',
+    okText: '确定',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        const userId = userStore.user?.id || userStore.userId
+        await favoriteService.batchDeleteFavorites(userId.toString(), [favoriteId])
+        message.success('已取消收藏')
+        await loadFavorites()
+      } catch (error) {
+        message.error('取消收藏失败')
+        console.error('Remove favorite error:', error)
+      }
+    }
+  })
+}
+
+// 拖拽结束后保存排序
+const handleDragEnd = async () => {
+  isDragging.value = false
+  try {
+    const userId = userStore.user?.id || userStore.userId
+    const favoriteIds = fullFavorites.value.map(f => f.id)
+    await favoriteService.reorderFavorites(userId.toString(), favoriteIds)
+    message.success('排序已保存')
+  } catch (error) {
+    message.error('保存排序失败')
+    console.error('Reorder error:', error)
+    await loadFavorites() // 重新加载以恢复原顺序
+  }
+}
+
+// 拖拽开始
+const handleDragStart = () => {
+  isDragging.value = true
 }
 
 // 跳转到stall详情
@@ -296,6 +486,12 @@ onMounted(() => {
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 2px solid #f3f4f6;
+}
+
+.section-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
 }
 
 .section-icon-box {
@@ -422,11 +618,38 @@ onMounted(() => {
   background-color: #fee2e2;
 }
 
+/* 拖拽提示 */
+.drag-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  color: #0284c7;
+  font-size: 14px;
+}
+
+/* 收藏容器 */
+.favorites-container {
+  width: 100%;
+}
+
 /* 收藏网格 */
 .favorites-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
+}
+
+.favorites-grid.is-dragging .favorite-card {
+  cursor: move;
+}
+
+.favorites-grid.batch-mode .favorite-card {
+  cursor: pointer;
 }
 
 .favorite-card {
@@ -436,12 +659,62 @@ onMounted(() => {
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .favorite-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   border-color: #d1d5db;
+}
+
+.favorite-card.batch-mode:hover {
+  transform: none;
+  border-color: #3b82f6;
+}
+
+.favorite-card.is-selected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* 拖拽手柄 */
+.drag-handle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  cursor: move;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: #6b7280;
+}
+
+.favorite-card:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* 批量选择复选框 */
+.favorite-checkbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  padding: 4px;
 }
 
 .favorite-image {

@@ -160,6 +160,183 @@ const reviewService = {
       console.error('获取用户评价失败:', error);
       throw error.response?.data || error.message;
     }
+  },
+
+  /**
+   * 获取热门评价（综合算法：点赞数 + 评分 + 时间新鲜度）
+   * @param {number} stallId - 摊位ID
+   * @param {Object} options - 查询选项
+   * @returns {Promise} - 返回热门评价列表
+   */
+  async getHotReviews(stallId, options = {}) {
+    try {
+      const { page = 0, size = 10 } = options;
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await axios.get(
+        `${API_BASE_URL}/reviews/stall/${stallId}/hot`,
+        {
+          params: { page, size },
+          headers
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('获取热门评价失败:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * 获取高分评价（4星及以上）
+   */
+  async getHighRatedReviews(stallId, options = {}) {
+    try {
+      const { page = 0, size = 10 } = options;
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await axios.get(
+        `${API_BASE_URL}/reviews/stall/${stallId}/high-rated`,
+        {
+          params: { page, size },
+          headers
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('获取高分评价失败:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * 获取低分评价（2星及以下）
+   */
+  async getLowRatedReviews(stallId, options = {}) {
+    try {
+      const { page = 0, size = 10 } = options;
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await axios.get(
+        `${API_BASE_URL}/reviews/stall/${stallId}/low-rated`,
+        {
+          params: { page, size },
+          headers
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('获取低分评价失败:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * 获取有图评价
+   */
+  async getReviewsWithImages(stallId, options = {}) {
+    try {
+      const { page = 0, size = 10 } = options;
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await axios.get(
+        `${API_BASE_URL}/reviews/stall/${stallId}/with-images`,
+        {
+          params: { page, size },
+          headers
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('获取有图评价失败:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * 按点赞数排序获取评价
+   */
+  async getReviewsByLikes(stallId, options = {}) {
+    try {
+      const { page = 0, size = 10 } = options;
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await axios.get(
+        `${API_BASE_URL}/reviews/stall/${stallId}/by-likes`,
+        {
+          params: { page, size },
+          headers
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('按点赞数获取评价失败:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * 按评分排序获取评价
+   */
+  async getReviewsByRating(stallId, options = {}) {
+    try {
+      const { page = 0, size = 10 } = options;
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await axios.get(
+        `${API_BASE_URL}/reviews/stall/${stallId}/by-rating`,
+        {
+          params: { page, size },
+          headers
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('按评分获取评价失败:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * 获取评价筛选选项
+   */
+  FILTER_OPTIONS: {
+    LATEST: { value: 'latest', label: '最新', endpoint: (stallId) => `/reviews/stall/${stallId}` },
+    HOT: { value: 'hot', label: '热门', endpoint: (stallId) => `/reviews/stall/${stallId}/hot` },
+    HIGH_RATED: { value: 'high-rated', label: '好评', endpoint: (stallId) => `/reviews/stall/${stallId}/high-rated` },
+    LOW_RATED: { value: 'low-rated', label: '差评', endpoint: (stallId) => `/reviews/stall/${stallId}/low-rated` },
+    WITH_IMAGES: { value: 'with-images', label: '有图', endpoint: (stallId) => `/reviews/stall/${stallId}/with-images` },
+    BY_LIKES: { value: 'by-likes', label: '点赞最多', endpoint: (stallId) => `/reviews/stall/${stallId}/by-likes` },
+    BY_RATING: { value: 'by-rating', label: '评分最高', endpoint: (stallId) => `/reviews/stall/${stallId}/by-rating` }
+  },
+
+  /**
+   * 根据筛选类型获取评价
+   */
+  async getReviewsByFilter(stallId, filter, options = {}) {
+    switch (filter) {
+      case 'hot':
+        return this.getHotReviews(stallId, options);
+      case 'high-rated':
+        return this.getHighRatedReviews(stallId, options);
+      case 'low-rated':
+        return this.getLowRatedReviews(stallId, options);
+      case 'with-images':
+        return this.getReviewsWithImages(stallId, options);
+      case 'by-likes':
+        return this.getReviewsByLikes(stallId, options);
+      case 'by-rating':
+        return this.getReviewsByRating(stallId, options);
+      case 'latest':
+      default:
+        return this.getReviewsByStallId(stallId, options);
+    }
   }
 };
 
