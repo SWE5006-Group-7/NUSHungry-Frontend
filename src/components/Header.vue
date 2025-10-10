@@ -5,7 +5,12 @@
       <a-typography-title :level="4" :style="brandTitle">NUSHungry</a-typography-title>
     </div>
 
-    <SearchBar :searchStyle="searchStyle" />
+    <a-input-search
+      allow-clear
+      :style="searchStyle"
+      size="large"
+      placeholder="Search for canteens, stalls, or dishes..."
+    />
 
     <!-- 未登录状态 -->
     <div v-if="!userStore.isAuthenticated" class="auth-buttons">
@@ -57,7 +62,6 @@ import { message } from 'ant-design-vue'
 import { UserOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getResourceUrl } from '@/utils/config'
-import SearchBar from './SearchBar.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
