@@ -77,6 +77,15 @@
               <HeartOutlined class="section-icon" />
             </div>
             <h2 class="section-title">我的收藏</h2>
+            <a-button
+              v-if="favorites.length > 0"
+              type="link"
+              @click="$router.push('/favorites')"
+              class="view-all-btn"
+            >
+              查看全部
+              <RightOutlined />
+            </a-button>
           </div>
           <a-spin :spinning="loadingFavorites">
             <div v-if="favorites.length === 0" class="empty-state">
@@ -133,7 +142,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import {
   UserOutlined,
   HeartFilled,
@@ -141,10 +150,12 @@ import {
   ShopOutlined,
   ClockCircleOutlined,
   StarOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  RightOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import authService from '@/services/authService'
+import { favoriteService } from '@/services/favoriteService'
 import Header from '@/components/Header.vue'
 
 const router = useRouter()
@@ -173,8 +184,19 @@ const loadReviews = async () => {
 const loadFavorites = async () => {
   try {
     loadingFavorites.value = true
-    const data = await authService.getUserFavorites()
-    favorites.value = data
+    const userId = userStore.user?.id
+    if (!userId) return
+
+    // 使用详细版本API获取收藏列表
+    const data = await favoriteService.getUserFavoritesDetailed(userId.toString())
+    // 只显示前4个
+    favorites.value = data.slice(0, 4).map(fav => ({
+      id: fav.favoriteId,
+      stallId: fav.stallId,
+      stallName: fav.stallName,
+      stallImage: fav.stallImage,
+      cafeteriaName: fav.cafeteriaName
+    }))
   } catch (error) {
     message.error('加载收藏失败')
     console.error('Load favorites error:', error)
@@ -191,8 +213,26 @@ const handleDeleteReview = async (reviewId) => {
 
 // 取消收藏
 const handleRemoveFavorite = async (favoriteId) => {
-  // TODO: 实现取消收藏的API
-  message.warning('取消收藏功能待实现')
+  Modal.confirm({
+    title: '确认取消收藏',
+    content: '确定要取消收藏这个摊位吗?',
+    okText: '确认',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        const userId = userStore.user?.id
+        if (!userId) return
+
+        await favoriteService.removeFavoriteById(userId.toString(), favoriteId)
+        message.success('已取消收藏')
+        await loadFavorites()
+      } catch (error) {
+        message.error('操作失败')
+        console.error('Remove favorite error:', error)
+      }
+    }
+  })
 }
 
 // 跳转到stall详情
@@ -296,6 +336,14 @@ onMounted(() => {
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 2px solid #f3f4f6;
+  position: relative;
+}
+
+.view-all-btn {
+  margin-left: auto;
+  color: #1890ff;
+  font-weight: 500;
+  padding-right: 0;
 }
 
 .section-icon-box {

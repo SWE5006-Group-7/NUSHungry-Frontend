@@ -6,6 +6,7 @@ import LoginPage from '@/pages/LoginPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
 import ForgotPassword from '@/pages/ForgotPassword.vue'
 import ProfilePage from '@/pages/ProfilePage.vue'
+import FavoritesPage from '@/pages/FavoritesPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 import AdminLogin from '@/views/admin/AdminLogin.vue'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
@@ -57,6 +58,12 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: ProfilePage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/favorites',
+    name: 'Favorites',
+    component: FavoritesPage,
     meta: { requiresAuth: true }
   },
   {
