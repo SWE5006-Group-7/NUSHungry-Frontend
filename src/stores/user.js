@@ -76,8 +76,8 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  function logout() {
-    authService.logout()
+  async function logout() {
+    await authService.logout()
     token.value = null
     user.value = null
   }

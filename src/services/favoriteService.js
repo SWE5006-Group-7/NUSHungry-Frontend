@@ -22,9 +22,17 @@ export const favoriteService = {
 
   // 检查是否已收藏
   async checkFavorite(userId, stallId) {
-    const response = await apiClient.get('/favorites/check', {
-      params: { userId, stallId }
-    })
-    return response.data.isFavorite
+    try {
+      const response = await apiClient.get('/favorites/check', {
+        params: { userId, stallId }
+      })
+      return response.data.isFavorite
+    } catch (error) {
+      // 如果是403或401错误，返回false（未登录或未授权）
+      if (error.response && (error.response.status === 403 || error.response.status === 401)) {
+        return false
+      }
+      throw error
+    }
   }
 }

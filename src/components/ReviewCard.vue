@@ -67,37 +67,104 @@
 
     <!-- 操作按钮 -->
     <div class="review-actions">
-      <a-space :size="16">
-        <a-button
-          v-if="review.canEdit"
-          type="link"
-          size="small"
-          @click="handleEdit"
-        >
-          <template #icon><EditOutlined /></template>
-          编辑
-        </a-button>
-        <a-button
-          v-if="review.canDelete"
-          type="link"
-          size="small"
-          danger
-          @click="handleDelete"
-        >
-          <template #icon><DeleteOutlined /></template>
-          删除
-        </a-button>
-      </a-space>
+      <div class="action-left">
+        <a-space :size="16">
+          <!-- 点赞按钮 -->
+          <a-button
+            type="link"
+            size="small"
+            :loading="liking"
+            @click="handleLike"
+            class="action-btn"
+          >
+            <template #icon>
+              <LikeFilled v-if="localLiked" style="color: #1890ff;" />
+              <LikeOutlined v-else />
+            </template>
+            {{ localLikesCount > 0 ? localLikesCount : '点赞' }}
+          </a-button>
+
+          <!-- 举报按钮 -->
+          <a-button
+            type="link"
+            size="small"
+            @click="handleReport"
+            class="action-btn report-btn"
+          >
+            <template #icon><FlagOutlined /></template>
+            举报
+          </a-button>
+        </a-space>
+      </div>
+
+      <div class="action-right">
+        <a-space :size="16">
+          <a-button
+            v-if="review.canEdit"
+            type="link"
+            size="small"
+            @click="handleEdit"
+          >
+            <template #icon><EditOutlined /></template>
+            编辑
+          </a-button>
+          <a-button
+            v-if="review.canDelete"
+            type="link"
+            size="small"
+            danger
+            @click="handleDelete"
+          >
+            <template #icon><DeleteOutlined /></template>
+            删除
+          </a-button>
+        </a-space>
+      </div>
     </div>
+
+    <!-- 举报对话框 -->
+    <a-modal
+      v-model:open="reportVisible"
+      title="举报评价"
+      @ok="submitReport"
+      @cancel="cancelReport"
+      :confirm-loading="reporting"
+      okText="提交举报"
+      cancelText="取消"
+    >
+      <a-form layout="vertical">
+        <a-form-item label="举报原因" required>
+          <a-select
+            v-model:value="reportReason"
+            placeholder="请选择举报原因"
+            :options="reportReasons"
+          />
+        </a-form-item>
+
+        <a-form-item
+          label="详细描述"
+          :required="reportReason === 'OTHER'"
+        >
+          <a-textarea
+            v-model:value="reportDescription"
+            placeholder="请详细描述举报原因（选填）"
+            :rows="4"
+            :maxlength="500"
+            show-count
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue';
+import { EditOutlined, DeleteOutlined, LikeOutlined, LikeFilled, FlagOutlined } from '@ant-design/icons-vue';
 import { Modal, message } from 'ant-design-vue';
 import ImageGallery from './ImageGallery.vue';
 import reviewService from '../services/reviewService';
+import { useUserStore } from '../stores/user';
 
 const props = defineProps({
   review: {
@@ -110,10 +177,33 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['edit', 'delete']);
+const emit = defineEmits(['edit', 'delete', 'update']);
 
+const userStore = useUserStore();
 const isExpanded = ref(false);
 const MAX_LENGTH = 200;
+
+// 点赞和举报状态
+const localLikesCount = ref(props.review.likesCount || 0);
+const localLiked = ref(props.review.liked || false);
+const liking = ref(false);
+
+// 举报对话框
+const reportVisible = ref(false);
+const reportReason = ref(null);
+const reportDescription = ref('');
+const reporting = ref(false);
+
+// 举报原因选项
+const reportReasons = [
+  { value: 'SPAM', label: '垃圾信息' },
+  { value: 'OFFENSIVE', label: '侮辱谩骂' },
+  { value: 'INAPPROPRIATE', label: '不当内容' },
+  { value: 'FALSE_INFO', label: '虚假信息' },
+  { value: 'OFF_TOPIC', label: '与摊位无关' },
+  { value: 'DUPLICATE', label: '重复评价' },
+  { value: 'OTHER', label: '其他原因' }
+];
 
 const needsExpansion = computed(() => {
   return props.review.comment && props.review.comment.length > MAX_LENGTH;
@@ -181,6 +271,101 @@ const handleDelete = () => {
       }
     }
   });
+};
+
+const handleLike = async () => {
+  if (!userStore.isAuthenticated) {
+    message.warning('请先登录');
+    return;
+  }
+
+  if (liking.value) return;
+
+  liking.value = true;
+  try {
+    const response = await reviewService.toggleLike(props.review.id);
+    if (response.success) {
+      localLiked.value = response.liked;
+      localLikesCount.value = response.liked
+        ? localLikesCount.value + 1
+        : Math.max(0, localLikesCount.value - 1);
+      emit('update');
+    } else {
+      message.error(response.message || '操作失败');
+    }
+  } catch (error) {
+    console.error('点赞操作失败:', error);
+    console.error('Error response:', error.response);
+    if (error.message === '请先登录') {
+      message.warning('请先登录');
+    } else if (error.response && error.response.status === 403) {
+      message.error('登录已过期，请重新登录');
+      // 清除过期token
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      userStore.logout();
+      // 重定向到登录页
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+    } else {
+      message.error('操作失败，请稍后重试');
+    }
+  } finally {
+    liking.value = false;
+  }
+};
+
+const handleReport = () => {
+  if (!userStore.isAuthenticated) {
+    message.warning('请先登录');
+    return;
+  }
+  reportVisible.value = true;
+};
+
+const submitReport = async () => {
+  if (!reportReason.value) {
+    message.warning('请选择举报原因');
+    return;
+  }
+
+  if (reportReason.value === 'OTHER' && !reportDescription.value.trim()) {
+    message.warning('请输入详细描述');
+    return;
+  }
+
+  reporting.value = true;
+  try {
+    const response = await reviewService.reportReview(props.review.id, {
+      reason: reportReason.value,
+      description: reportDescription.value
+    });
+
+    if (response.success) {
+      message.success('举报提交成功，我们会尽快处理');
+      reportVisible.value = false;
+      reportReason.value = null;
+      reportDescription.value = '';
+    } else {
+      message.error(response.message || '举报提交失败');
+    }
+  } catch (error) {
+    console.error('举报提交失败:', error);
+    if (error.message && error.message.includes('已经举报')) {
+      message.warning('您已经举报过此评价');
+    } else {
+      message.error('举报提交失败，请稍后重试');
+    }
+  } finally {
+    reporting.value = false;
+  }
+};
+
+const cancelReport = () => {
+  reportVisible.value = false;
+  reportReason.value = null;
+  reportDescription.value = '';
 };
 </script>
 
@@ -267,6 +452,30 @@ const handleDelete = () => {
 .review-actions {
   margin-top: 12px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.action-left {
+  display: flex;
+  gap: 8px;
+}
+
+.action-right {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  color: #64748b;
+  padding: 0 8px;
+}
+
+.action-btn:hover {
+  color: #1890ff;
+}
+
+.report-btn:hover {
+  color: #ff4d4f;
 }
 </style>

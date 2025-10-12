@@ -143,7 +143,8 @@ import {
   EditOutlined,
   DeleteOutlined,
   SettingOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  WarningOutlined
 } from '@ant-design/icons-vue';
 import adminDashboardApi from '@/api/admin/dashboard';
 
@@ -227,7 +228,7 @@ const quickActions = ref([
   { title: '食堂管理', icon: ShoppingOutlined, color: '#13c2c2', action: 'manageCafeterias' },
   { title: '摊位管理', icon: ShoppingOutlined, color: '#722ed1', action: 'manageStalls' },
   { title: '用户管理', icon: UserOutlined, color: '#1890ff', action: 'manageUsers' },
-  { title: '内容审核', icon: CheckCircleOutlined, color: '#52c41a', action: 'contentModeration' },
+  { title: '评价管理', icon: StarOutlined, color: '#faad14', action: 'manageReviews' },
   { title: '系统设置', icon: SettingOutlined, color: '#8c8c8c', action: 'settings' }
 ]);
 
@@ -340,8 +341,8 @@ const handleQuickAction = (action) => {
     case 'manageUsers':
       goToUserManagement();
       break;
-    case 'contentModeration':
-      router.push('/admin/moderation');
+    case 'manageReviews':
+      router.push('/admin/reviews');
       break;
     case 'settings':
       message.info('系统设置功能正在开发中');

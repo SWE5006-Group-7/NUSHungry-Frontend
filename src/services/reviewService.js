@@ -1,4 +1,5 @@
 import axios from 'axios';
+import apiClient from '@/utils/request';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -158,6 +159,39 @@ const reviewService = {
       return response.data;
     } catch (error) {
       console.error('获取用户评价失败:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * 点赞/取消点赞评价
+   * @param {number} reviewId - 评价ID
+   * @returns {Promise} - 返回点赞状态
+   */
+  async toggleLike(reviewId) {
+    try {
+      const response = await apiClient.post(`/reviews/${reviewId}/like`);
+      return response.data;
+    } catch (error) {
+      console.error('点赞操作失败:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * 举报评价
+   * @param {number} reviewId - 评价ID
+   * @param {Object} reportData - 举报数据
+   * @param {string} reportData.reason - 举报原因
+   * @param {string} reportData.description - 详细描述
+   * @returns {Promise} - 返回举报结果
+   */
+  async reportReview(reviewId, reportData) {
+    try {
+      const response = await apiClient.post(`/reviews/${reviewId}/report`, reportData);
+      return response.data;
+    } catch (error) {
+      console.error('举报提交失败:', error);
       throw error.response?.data || error.message;
     }
   }

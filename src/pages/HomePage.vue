@@ -152,7 +152,19 @@ const getCuisineBtnStyle = (cuisineName) => {
 // Filtering
 const filtered = computed(() => {
   const cuisines = selectedCuisines.value
+  const keyword = route.query.keyword
+
   let list = sourceStalls.value.filter(s => {
+    // Filter by keyword (search in name and cuisine)
+    if (keyword) {
+      const kw = keyword.toLowerCase()
+      const matchName = s.name?.toLowerCase().includes(kw)
+      const matchCuisine = s.cuisine?.toLowerCase().includes(kw)
+      if (!matchName && !matchCuisine) {
+        return false
+      }
+    }
+
     // Filter by cuisine
     if (cuisines.size > 0 && s.cuisine && !cuisines.has(s.cuisine)) {
       return false

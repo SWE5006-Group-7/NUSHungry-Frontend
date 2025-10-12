@@ -24,16 +24,93 @@ apiClient.interceptors.request.use(
   }
 )
 
-// 响应拦截器 - 处理token过期
+// 是否正在刷新token
+let isRefreshing = false
+// 等待刷新token的请求队列
+let refreshSubscribers = []
+
+// 通知所有等待的请求
+const onRefreshed = (newToken) => {
+  refreshSubscribers.forEach(callback => callback(newToken))
+  refreshSubscribers = []
+}
+
+// 添加到等待队列
+const addRefreshSubscriber = (callback) => {
+  refreshSubscribers.push(callback)
+}
+
+// 响应拦截器 - 处理token过期并自动刷新
 apiClient.interceptors.response.use(
   response => response,
-  error => {
-    if (error.response && error.response.status === 401) {
-      // Token过期或无效,清除本地存储并重定向到登录页
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
+  async error => {
+    const originalRequest = error.config
+
+    // 如果是401错误且不是refresh请求
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      // 如果是refresh端点失败,直接跳转登录
+      if (originalRequest.url && originalRequest.url.includes('/auth/refresh')) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('user')
+        window.location.href = '/login'
+        return Promise.reject(error)
+      }
+
+      // 标记该请求已经重试过
+      originalRequest._retry = true
+
+      // 如果正在刷新token,将请求加入队列
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          addRefreshSubscriber((newToken) => {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`
+            resolve(apiClient(originalRequest))
+          })
+        })
+      }
+
+      // 开始刷新token
+      isRefreshing = true
+      const refreshToken = localStorage.getItem('refreshToken')
+
+      if (!refreshToken) {
+        // 没有refresh token,直接跳转登录
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        window.location.href = '/login'
+        return Promise.reject(error)
+      }
+
+      try {
+        // 调用refresh token接口
+        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+          refreshToken: refreshToken
+        })
+
+        const { accessToken } = response.data
+
+        // 保存新的access token
+        localStorage.setItem('token', accessToken)
+
+        // 通知所有等待的请求
+        onRefreshed(accessToken)
+
+        // 重试原始请求
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`
+        return apiClient(originalRequest)
+      } catch (refreshError) {
+        // refresh token也失效了,跳转登录
+        localStorage.removeItem('token')
+        localStorage.removeItem('refreshToken')
+        localStorage.removeItem('user')
+        window.location.href = '/login'
+        return Promise.reject(refreshError)
+      } finally {
+        isRefreshing = false
+      }
     }
+
     return Promise.reject(error)
   }
 )
@@ -43,15 +120,18 @@ export default {
   async register(userData) {
     try {
       const response = await apiClient.post('/auth/register', userData)
-      const { token, id, username, email, avatarUrl } = response.data
+      const { token, refreshToken, id, username, email, avatarUrl } = response.data
 
       // 构建user对象
       const user = { id, username, email, avatarUrl }
 
-      // 保存token和用户信息
+      // 保存token、refresh token和用户信息
       if (token) {
         localStorage.setItem('token', token)
         localStorage.setItem('user', JSON.stringify(user))
+      }
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken)
       }
 
       return { token, user }
@@ -64,15 +144,18 @@ export default {
   async login(credentials) {
     try {
       const response = await apiClient.post('/auth/login', credentials)
-      const { token, id, username, email, avatarUrl } = response.data
+      const { token, refreshToken, id, username, email, avatarUrl } = response.data
 
       // 构建user对象
       const user = { id, username, email, avatarUrl }
 
-      // 保存token和用户信息
+      // 保存token、refresh token和用户信息
       if (token) {
         localStorage.setItem('token', token)
         localStorage.setItem('user', JSON.stringify(user))
+      }
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken)
       }
 
       return { token, user }
@@ -82,10 +165,22 @@ export default {
   },
 
   // 用户登出
-  logout() {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('userInfo')  // 同时清除管理员登录的信息
+  async logout() {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken')
+      if (refreshToken) {
+        // 调用后端撤销refresh token
+        await apiClient.post('/auth/logout', { refreshToken })
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // 无论是否成功,都清除本地存储
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+      localStorage.removeItem('userInfo')  // 同时清除管理员登录的信息
+    }
   },
 
   // 获取当前用户信息
