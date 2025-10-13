@@ -130,32 +130,27 @@
           <a-col :xs="24" :lg="10">
             <a-card :style="cardStyle" :body-style="{ padding: '16px' }">
               <template #title>
-                <a-tag color="purple-inverse">LOCATION & INFO</a-tag>
+                <a-tag color="purple-inverse">LOCATION</a-tag>
               </template>
 
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <a-typography-title :level="5" style="margin: 0;">Location</a-typography-title>
-                <a-button v-if="locationInfo" type="primary" @click="openNavigation" size="small" style="border-radius: 6px;">
-                  🧭 Navigate
-                </a-button>
+              <div v-if="locationInfo">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                  <a-typography-text> {{ locationInfo.name }} </a-typography-text>
+                  <a-button type="primary" @click="openNavigation" size="small" style="border-radius: 6px;">
+                    🧭 Navigate
+                  </a-button>
+                </div>
+                <MapSection :markers="[locationInfo.marker]" height="200px" />
               </div>
 
-              <!-- Location display with map -->
-              <a-card v-if="locationInfo" :style="{ borderRadius: '12px', marginBottom: '16px' }" :body-style="{ padding: '16px' }">
-                <a-typography-text> {{ locationInfo.name }} </a-typography-text>
-                <div style="margin-top: 12px;">
-                  <MapSection :markers="[locationInfo.marker]" height="200px" />
-                </div>
-              </a-card>
-
               <!-- No location info -->
-              <a-card v-else :style="{ borderRadius: '12px', marginBottom: '16px' }" :body-style="{ padding: '16px' }">
+              <div v-else>
                 <a-empty description="Location information not available" :image="null">
                   <template #description>
                     <a-typography-text type="secondary">No location data for this stall yet</a-typography-text>
                   </template>
                 </a-empty>
-              </a-card>
+              </div>
             </a-card>
 
             <!-- Review List Card -->
