@@ -5,10 +5,10 @@ export default {
   async register(userData) {
     try {
       const response = await apiClient.post('/auth/register', userData)
-      const { token, refreshToken, id, username, email, avatarUrl } = response.data
+      const { token, refreshToken, id, username, email, avatarUrl, role } = response.data
 
-      // 构建user对象
-      const user = { id, username, email, avatarUrl }
+      // 构建user对象（包含role）
+      const user = { id, username, email, avatarUrl, role }
 
       // 保存token、refresh token和用户信息
       if (token) {
@@ -29,10 +29,10 @@ export default {
   async login(credentials) {
     try {
       const response = await apiClient.post('/auth/login', credentials)
-      const { token, refreshToken, id, username, email, avatarUrl } = response.data
+      const { token, refreshToken, id, username, email, avatarUrl, role } = response.data
 
-      // 构建user对象
-      const user = { id, username, email, avatarUrl }
+      // 构建user对象（包含role）
+      const user = { id, username, email, avatarUrl, role }
 
       // 保存token、refresh token和用户信息
       if (token) {

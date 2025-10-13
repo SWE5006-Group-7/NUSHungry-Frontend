@@ -64,7 +64,7 @@
           <!-- Right content: map + list -->
           <a-col :xs="24" :lg="18">
             <!-- Map section at top of right column -->
-            <div style="margin-bottom: 24px;">
+            <div :class="{ 'map-pinned': isMapPinned }" class="map-container">
               <MapSection
                 :markers="homeMarkers"
                 height="360px"
@@ -72,6 +72,7 @@
                 :route-on-click="true"
                 @marker-click="focusAndScroll"
                 @bounds-changed="handleMapBoundsChanged"
+                @pin-changed="handlePinChanged"
               />
             </div>
             <a-card :style="cardStyle" :body-style="{ padding: '28px' }">
@@ -265,6 +266,12 @@ const homeMarkers = computed(() => {
   return markers
 })
 
+// Map pinning
+const isMapPinned = ref(false)
+const handlePinChanged = (pinned) => {
+  isMapPinned.value = pinned
+}
+
 // Map <-> List linking
 const focusId = ref(null)
 const onHover = (id) => {
@@ -347,6 +354,18 @@ watch([selectedCuisines, openNow, distanceKm, sortByRating], () => {
 </script>
 
 <style scoped>
+.map-container {
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+}
+
+.map-container.map-pinned {
+  position: sticky;
+  top: 80px;
+  z-index: 100;
+  margin-bottom: 24px;
+}
+
 .cuisine-btn {
   position: relative;
   overflow: hidden;

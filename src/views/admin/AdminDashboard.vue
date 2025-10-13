@@ -14,8 +14,23 @@
       </div>
     </div>
 
+    <!-- 快捷操作 -->
+    <div class="quick-actions">
+      <h3>快捷操作</h3>
+      <a-row :gutter="[16, 16]" class="quick-actions-row">
+        <a-col :flex="1" v-for="action in quickActions" :key="action.title">
+          <div class="action-card" @click="handleQuickAction(action)">
+            <component :is="action.icon" :style="{ fontSize: '32px', color: action.color }" />
+            <span>{{ action.title }}</span>
+          </div>
+        </a-col>
+      </a-row>
+    </div>
+
     <!-- 统计卡片区域 -->
-    <a-row :gutter="[16, 16]" class="stats-cards">
+    <div class="stats-section">
+      <h3>数据概览</h3>
+      <a-row :gutter="[16, 16]" class="stats-cards">
       <a-col :xs="12" :sm="12" :md="6" v-for="card in statsCards" :key="card.title">
         <a-card :loading="statsLoading" hoverable>
           <a-statistic
@@ -36,6 +51,7 @@
         </a-card>
       </a-col>
     </a-row>
+    </div>
 
     <!-- 图表区域 -->
     <a-row :gutter="[16, 16]" class="charts-section">
@@ -111,19 +127,6 @@
         </a-card>
       </a-col>
     </a-row>
-
-    <!-- 快捷操作 -->
-    <div class="quick-actions">
-      <h3>快捷操作</h3>
-      <a-row :gutter="[16, 16]">
-        <a-col :xs="12" :sm="6" :md="4" v-for="action in quickActions" :key="action.title">
-          <div class="action-card" @click="handleQuickAction(action)">
-            <component :is="action.icon" :style="{ fontSize: '32px', color: action.color }" />
-            <span>{{ action.title }}</span>
-          </div>
-        </a-col>
-      </a-row>
-    </div>
   </div>
 </template>
 
@@ -761,11 +764,18 @@ onBeforeUnmount(() => {
   }
 
   .quick-actions {
+    margin-bottom: 24px;
+
     h3 {
       font-size: 18px;
       font-weight: 600;
       color: #303133;
       margin-bottom: 16px;
+    }
+
+    .quick-actions-row {
+      display: flex;
+      flex-wrap: wrap;
     }
 
     .action-card {
@@ -791,6 +801,17 @@ onBeforeUnmount(() => {
       }
     }
   }
+
+  .stats-section {
+    margin-bottom: 24px;
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      margin-bottom: 16px;
+    }
+  }
 }
 
 // 响应式设计
@@ -806,7 +827,16 @@ onBeforeUnmount(() => {
 
     .quick-actions {
       .action-card {
-        padding: 16px;
+        padding: 12px 8px;
+
+        :deep(.anticon) {
+          font-size: 24px !important;
+        }
+
+        span {
+          font-size: 12px;
+          margin-top: 8px;
+        }
       }
     }
   }

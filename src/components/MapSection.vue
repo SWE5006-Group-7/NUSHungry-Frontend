@@ -1,7 +1,13 @@
 <template>
-  <div :style="wrapperStyle">
+  <div :style="wrapperStyle" :class="{ 'pinned': isPinned }">
     <div ref="mapEl" class="leaflet-host" :style="{ height, borderRadius: '20px' }"></div>
-    <button v-if="userLocation" @click="returnToUserLocation" class="location-btn" title="Return to my location">
+    <button @click="togglePin" class="pin-btn" :class="{ 'active': isPinned }" :title="isPinned ? 'Unpin map' : 'Pin map to top'">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 17v5"/>
+        <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>
+      </svg>
+    </button>
+    <button @click="returnToUserLocation" class="location-btn" :class="{ 'disabled': !userLocation }" :title="userLocation ? 'Return to my location' : 'Getting your location...'">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <circle cx="12" cy="12" r="3"/>
@@ -22,10 +28,11 @@ const props = defineProps({
   routeOnClick: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['marker-click', 'bounds-changed'])
+const emit = defineEmits(['marker-click', 'bounds-changed', 'pin-changed'])
 
 const mapEl = ref(null)
 const userLocation = ref(null)
+const isPinned = ref(false)
 let map
 let layerGroup
 let markerById = new Map()
@@ -166,6 +173,11 @@ function returnToUserLocation() {
   }
 }
 
+function togglePin() {
+  isPinned.value = !isPinned.value
+  emit('pin-changed', isPinned.value)
+}
+
 const wrapperStyle = {
   position: 'relative',
   background: 'white',
@@ -173,8 +185,7 @@ const wrapperStyle = {
   padding: '8px',
   boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
   border: '1px solid rgba(0,0,0,0.03)',
-  /* Avoid creating a new stacking context here (no transform) */
-  transform: undefined
+  transition: 'all 0.3s ease'
 }
 </script>
 
@@ -192,6 +203,51 @@ const wrapperStyle = {
   z-index: 0;
 }
 
+/* Pinned state - visual feedback only */
+.pinned {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15) !important;
+}
+
+.pin-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 1000;
+  color: #64748b;
+}
+
+.pin-btn:hover {
+  background: #667eea;
+  color: white;
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+}
+
+.pin-btn.active {
+  background: #667eea;
+  color: white;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.pin-btn.active:hover {
+  background: #5a67d8;
+}
+
+.pin-btn:active {
+  transform: scale(0.95);
+}
+
 .location-btn {
   position: absolute;
   bottom: 24px;
@@ -207,7 +263,8 @@ const wrapperStyle = {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  z-index: 1000;
+  z-index: 1001;
+  color: #64748b;
 }
 
 .location-btn:hover {
@@ -219,6 +276,18 @@ const wrapperStyle = {
 
 .location-btn:active {
   transform: scale(0.95);
+}
+
+.location-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.location-btn.disabled:hover {
+  background: white;
+  color: #64748b;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 :deep(.user-location-marker) {

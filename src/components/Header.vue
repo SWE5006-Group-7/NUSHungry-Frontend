@@ -71,6 +71,10 @@
             <SettingOutlined />
             设置
           </a-menu-item>
+          <a-menu-item v-if="userIsAdmin" key="dashboard" @click="goToDashboard">
+            <DashboardOutlined />
+            管理后台
+          </a-menu-item>
           <a-menu-divider />
           <a-menu-item key="logout" @click="handleLogout">
             <LogoutOutlined />
@@ -83,13 +87,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { UserOutlined, SettingOutlined, LogoutOutlined, ClockCircleOutlined } from '@ant-design/icons-vue'
+import { UserOutlined, SettingOutlined, LogoutOutlined, ClockCircleOutlined, DashboardOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getResourceUrl } from '@/utils/config'
 import searchService from '@/services/searchService'
+import { isAdmin } from '@/utils/role'
 
 const router = useRouter()
 const route = useRoute()
@@ -99,6 +104,9 @@ const searchKeyword = ref('')
 const searchOptions = ref([])
 const recentKeywords = ref([])
 const dropdownVisible = ref(false)
+
+// 检查当前用户是否是管理员
+const userIsAdmin = computed(() => isAdmin())
 
 const headerStyle = {
   background: '#ffffff',
@@ -292,6 +300,10 @@ const goToProfile = () => {
 
 const goToSettings = () => {
   router.push('/settings')
+}
+
+const goToDashboard = () => {
+  router.push('/admin/dashboard')
 }
 
 const handleLogout = () => {
