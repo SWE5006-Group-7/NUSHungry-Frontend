@@ -50,19 +50,6 @@
             <a-select-option value="ROLE_USER">普通用户</a-select-option>
           </a-select>
         </a-col>
-        <a-col :xs="12" :sm="6" :md="4">
-          <a-select
-            v-model:value="statusFilter"
-            placeholder="状态筛选"
-            style="width: 100%"
-            allow-clear
-            @change="handleSearch"
-          >
-            <a-select-option value="">全部状态</a-select-option>
-            <a-select-option value="enabled">已启用</a-select-option>
-            <a-select-option value="disabled">已禁用</a-select-option>
-          </a-select>
-        </a-col>
         <a-col :xs="24" :sm="12" :md="8">
           <a-space>
             <a-button type="primary" @click="handleSearch">
@@ -90,12 +77,6 @@
         >
           <template #description>
             <a-space>
-              <a-button size="small" type="primary" @click="handleBatchEnable">
-                批量启用
-              </a-button>
-              <a-button size="small" danger @click="handleBatchDisable">
-                批量禁用
-              </a-button>
               <a-button size="small" danger @click="handleBatchDelete">
                 批量删除
               </a-button>
@@ -121,37 +102,35 @@
       />
     </a-card>
 
-    <!-- 用户详情抽屉 -->
-    <a-drawer
+    <!-- 用户详情模态框 -->
+    <a-modal
       v-model:open="detailDrawerVisible"
       title="用户详情"
-      :width="640"
-      placement="right"
+      :footer="null"
+      width="600px"
     >
-      <div v-if="selectedUser" class="user-detail">
-        <a-descriptions title="基本信息" bordered :column="1">
-          <a-descriptions-item label="ID">{{ selectedUser.id }}</a-descriptions-item>
-          <a-descriptions-item label="用户名">{{ selectedUser.username }}</a-descriptions-item>
-          <a-descriptions-item label="邮箱">{{ selectedUser.email }}</a-descriptions-item>
-          <a-descriptions-item label="角色">
-            <a-tag :color="getRoleTagColor(selectedUser.role)">
-              {{ getRoleName(selectedUser.role) }}
-            </a-tag>
-          </a-descriptions-item>
-          <a-descriptions-item label="状态">
-            <a-tag :color="selectedUser.enabled ? 'success' : 'error'">
-              {{ selectedUser.enabled ? '已启用' : '已禁用' }}
-            </a-tag>
-          </a-descriptions-item>
-          <a-descriptions-item label="注册时间">
-            {{ formatDate(selectedUser.createdAt) }}
-          </a-descriptions-item>
-          <a-descriptions-item label="最后更新">
-            {{ formatDate(selectedUser.updatedAt) }}
-          </a-descriptions-item>
-        </a-descriptions>
-      </div>
-    </a-drawer>
+      <a-descriptions v-if="selectedUser" :column="1" bordered>
+        <a-descriptions-item label="用户头像">
+          <a-avatar :src="selectedUser.avatarUrl || defaultAvatar" :size="64">
+            {{ selectedUser.username?.charAt(0) }}
+          </a-avatar>
+        </a-descriptions-item>
+        <a-descriptions-item label="ID">{{ selectedUser.id }}</a-descriptions-item>
+        <a-descriptions-item label="用户名">{{ selectedUser.username }}</a-descriptions-item>
+        <a-descriptions-item label="邮箱">{{ selectedUser.email }}</a-descriptions-item>
+        <a-descriptions-item label="角色">
+          <a-tag :color="getRoleTagColor(selectedUser.role)">
+            {{ getRoleName(selectedUser.role) }}
+          </a-tag>
+        </a-descriptions-item>
+        <a-descriptions-item label="注册时间">
+          {{ formatDate(selectedUser.createdAt) }}
+        </a-descriptions-item>
+        <a-descriptions-item label="最后更新">
+          {{ formatDate(selectedUser.updatedAt) }}
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-modal>
 
     <!-- 编辑用户对话框 -->
     <a-modal
@@ -180,9 +159,6 @@
             <a-select-option value="ROLE_USER">普通用户</a-select-option>
             <a-select-option value="ROLE_ADMIN">管理员</a-select-option>
           </a-select>
-        </a-form-item>
-        <a-form-item label="状态" name="enabled">
-          <a-switch v-model:checked="editForm.enabled" />
         </a-form-item>
         <a-form-item v-if="!selectedUser" label="密码" name="password">
           <a-input-password v-model:value="editForm.password" placeholder="请输入密码" />
@@ -228,7 +204,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, h } from 'vue';
-import { message, Modal, Avatar, Tag, Switch, Button, Space } from 'ant-design-vue';
+import { message, Modal, Avatar, Tag, Button, Space } from 'ant-design-vue';
 import dayjs from 'dayjs';
 import {
   PlusOutlined,
@@ -272,7 +248,6 @@ const selectedUser = ref(null);
 // 搜索和筛选
 const searchQuery = ref('');
 const roleFilter = ref('');
-const statusFilter = ref('');
 
 // 对话框状态
 const detailDrawerVisible = ref(false);
@@ -284,7 +259,6 @@ const editForm = reactive({
   username: '',
   email: '',
   role: 'ROLE_USER',
-  enabled: true,
   password: ''
 });
 
@@ -339,14 +313,26 @@ const columns = [
     key: 'user',
     width: 250,
     customRender: ({ record }) => {
-      return h('div', { class: 'user-info' }, [
+      return h('div', {
+        class: 'user-info',
+        style: { display: 'flex', alignItems: 'center', gap: '12px' }
+      }, [
         h(Avatar, {
           src: record.avatarUrl || defaultAvatar,
           size: 40
         }, () => record.username?.charAt(0)),
-        h('div', { class: 'user-text' }, [
-          h('div', { class: 'username' }, record.username),
-          h('div', { class: 'email' }, record.email)
+        h('div', {
+          class: 'user-text',
+          style: { flex: '1', minWidth: '0' }
+        }, [
+          h('div', {
+            class: 'username',
+            style: { fontWeight: '500', color: '#303133', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+          }, record.username),
+          h('div', {
+            class: 'email',
+            style: { fontSize: '12px', color: '#909399', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+          }, record.email)
         ])
       ]);
     }
@@ -358,21 +344,6 @@ const columns = [
     width: 120,
     customRender: ({ text }) => {
       return h(Tag, { color: getRoleTagColor(text) }, () => getRoleName(text));
-    }
-  },
-  {
-    title: '状态',
-    key: 'status',
-    width: 100,
-    customRender: ({ record }) => {
-      return h(Switch, {
-        checked: record.enabled,
-        disabled: record.id === currentUserId.value,
-        onChange: (checked) => {
-          record.enabled = checked;
-          handleStatusChange(record);
-        }
-      });
     }
   },
   {
@@ -468,8 +439,7 @@ const fetchUsers = async () => {
       page: currentPage.value - 1,
       size: pageSize.value,
       search: searchQuery.value,
-      role: roleFilter.value,
-      status: statusFilter.value
+      role: roleFilter.value
     });
 
     users.value = response.data.users || [];
@@ -485,7 +455,7 @@ const fetchUsers = async () => {
 
 // 返回dashboard
 const goToDashboard = () => {
-  router.push('/admin/dashboard');
+  router.back();
 };
 
 // 搜索处理
@@ -498,7 +468,6 @@ const handleSearch = () => {
 const resetFilters = () => {
   searchQuery.value = '';
   roleFilter.value = '';
-  statusFilter.value = '';
   currentPage.value = 1;
   fetchUsers();
 };
@@ -515,19 +484,6 @@ const clearSelection = () => {
   selectedRowKeys.value = [];
 };
 
-// 状态切换
-const handleStatusChange = async (user) => {
-  try {
-    await adminUserApi.updateUserStatus(user.id, { enabled: user.enabled });
-    message.success(user.enabled ? '账户已启用' : '账户已禁用');
-  } catch (error) {
-    console.error('Failed to update user status:', error);
-    message.error('更新用户状态失败');
-    // 恢复原状态
-    user.enabled = !user.enabled;
-  }
-};
-
 // 查看详情
 const handleView = (user) => {
   selectedUser.value = user;
@@ -540,7 +496,6 @@ const handleEdit = (user) => {
   editForm.username = user.username;
   editForm.email = user.email;
   editForm.role = user.role;
-  editForm.enabled = user.enabled;
   editForm.password = '';
   editModalVisible.value = true;
 };
@@ -551,7 +506,6 @@ const handleAddUser = () => {
   editForm.username = '';
   editForm.email = '';
   editForm.role = 'ROLE_USER';
-  editForm.enabled = true;
   editForm.password = '';
   editModalVisible.value = true;
 };
@@ -567,13 +521,17 @@ const handleEditSubmit = async () => {
       await adminUserApi.updateUser(selectedUser.value.id, {
         username: editForm.username,
         email: editForm.email,
-        role: editForm.role,
-        enabled: editForm.enabled
+        role: editForm.role
       });
       message.success('用户更新成功');
     } else {
       // 创建用户
-      await adminUserApi.createUser(editForm);
+      await adminUserApi.createUser({
+        username: editForm.username,
+        email: editForm.email,
+        role: editForm.role,
+        password: editForm.password
+      });
       message.success('用户创建成功');
     }
 
@@ -645,38 +603,6 @@ const handleDelete = async (user) => {
 };
 
 // 批量操作
-const handleBatchEnable = async () => {
-  try {
-    const userIds = selectedRowKeys.value;
-    await adminUserApi.batchOperation({
-      userIds,
-      operation: 'enable'
-    });
-    message.success('批量启用成功');
-    fetchUsers();
-    clearSelection();
-  } catch (error) {
-    console.error('Failed to batch enable:', error);
-    message.error('批量启用失败');
-  }
-};
-
-const handleBatchDisable = async () => {
-  try {
-    const userIds = selectedRowKeys.value;
-    await adminUserApi.batchOperation({
-      userIds,
-      operation: 'disable'
-    });
-    message.success('批量禁用成功');
-    fetchUsers();
-    clearSelection();
-  } catch (error) {
-    console.error('Failed to batch disable:', error);
-    message.error('批量禁用失败');
-  }
-};
-
 const handleBatchDelete = async () => {
   Modal.confirm({
     title: '批量删除确认',
@@ -760,16 +686,26 @@ onMounted(() => {
       display: flex;
       align-items: center;
       gap: 12px;
+      min-width: 0; // 确保flex布局正常工作
 
       .user-text {
+        flex: 1;
+        min-width: 0; // 防止内容撑开父容器
+
         .username {
           font-weight: 500;
           color: #303133;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .email {
           font-size: 12px;
           color: #909399;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       }
     }

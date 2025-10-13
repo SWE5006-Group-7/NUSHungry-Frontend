@@ -465,7 +465,7 @@ const formatDate = (dateString) => {
 
 // 返回dashboard
 const goToDashboard = () => {
-  router.push('/admin/dashboard')
+  router.back()
 }
 
 // 初始化

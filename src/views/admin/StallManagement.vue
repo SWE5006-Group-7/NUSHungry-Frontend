@@ -169,57 +169,46 @@
       />
     </a-modal>
 
-    <!-- 摊位详情抽屉 -->
-    <a-drawer
+    <!-- 摊位详情模态框 -->
+    <a-modal
       v-model:open="detailDrawerVisible"
       title="摊位详情"
-      :width="720"
-      placement="right"
+      :footer="null"
+      width="600px"
     >
-      <div v-if="selectedStall" class="stall-detail">
-        <a-descriptions title="基本信息" bordered :column="1">
-          <a-descriptions-item label="ID">{{ selectedStall.id }}</a-descriptions-item>
-          <a-descriptions-item label="名称">{{ selectedStall.name }}</a-descriptions-item>
-          <a-descriptions-item label="菜系类型">{{ selectedStall.cuisineType }}</a-descriptions-item>
-          <a-descriptions-item label="所属食堂">
-            {{ selectedStall.cafeteria?.name || '未分配' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="Halal信息">
-            {{ selectedStall.halalInfo || '无' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="联系方式">
-            {{ selectedStall.contact || '无' }}
-          </a-descriptions-item>
-        </a-descriptions>
-
-        <a-divider />
-
-        <a-descriptions title="统计信息" bordered :column="2">
-          <a-descriptions-item label="平均评分">
-            <a-rate
-              :value="selectedStall.averageRating"
-              allow-half
-              disabled
-              style="font-size: 14px"
-            />
-            {{ selectedStall.averageRating?.toFixed(1) || '0.0' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="评价数量">
-            {{ selectedStall.reviewCount || 0 }} 条
-          </a-descriptions-item>
-          <a-descriptions-item label="图片数量">
-            {{ selectedStall.images?.length || 0 }} 张
-          </a-descriptions-item>
-        </a-descriptions>
-
-        <a-divider />
-
-        <div v-if="selectedStall.imageUrl">
-          <h3>封面图片</h3>
-          <img :src="selectedStall.imageUrl" alt="摊位图片" style="max-width: 100%; border-radius: 8px;" />
-        </div>
-      </div>
-    </a-drawer>
+      <a-descriptions v-if="selectedStall" :column="1" bordered>
+        <a-descriptions-item label="ID">{{ selectedStall.id }}</a-descriptions-item>
+        <a-descriptions-item label="名称">{{ selectedStall.name }}</a-descriptions-item>
+        <a-descriptions-item label="菜系类型">{{ selectedStall.cuisineType }}</a-descriptions-item>
+        <a-descriptions-item label="所属食堂">
+          {{ selectedStall.cafeteria?.name || '未分配' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="Halal信息">
+          {{ selectedStall.halalInfo || '无' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="联系方式">
+          {{ selectedStall.contact || '无' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="平均评分">
+          <a-rate
+            :value="selectedStall.averageRating"
+            allow-half
+            disabled
+            style="font-size: 14px"
+          />
+          {{ selectedStall.averageRating?.toFixed(1) || '0.0' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="评价数量">
+          {{ selectedStall.reviewCount || 0 }} 条
+        </a-descriptions-item>
+        <a-descriptions-item label="图片数量">
+          {{ selectedStall.images?.length || 0 }} 张
+        </a-descriptions-item>
+        <a-descriptions-item v-if="selectedStall.imageUrl" label="封面图片">
+          <img :src="selectedStall.imageUrl" alt="摊位图片" style="max-width: 100%; border-radius: 8px; margin-top: 8px;" />
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-modal>
   </div>
 </template>
 
@@ -322,7 +311,7 @@ const batchDeleting = ref(false);
 
 // 返回dashboard
 const goToDashboard = () => {
-  router.push('/admin/dashboard');
+  router.back();
 };
 
 // 获取摊位列表

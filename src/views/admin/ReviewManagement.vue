@@ -100,6 +100,7 @@
             :pagination="reviewPagination"
             @change="handleReviewTableChange"
             row-key="id"
+            :scroll="{ x: 1200 }"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'user'">
@@ -114,17 +115,30 @@
                 {{ record.stall?.name }}
               </template>
               <template v-else-if="column.key === 'rating'">
-                <a-rate :value="record.rating" disabled allow-half />
+                <a-rate :value="record.rating" disabled allow-half style="font-size: 14px;" />
               </template>
               <template v-else-if="column.key === 'comment'">
                 <div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
                   {{ record.comment }}
                 </div>
               </template>
-              <template v-else-if="column.key === 'moderationStatus'">
-                <a-tag :color="getModerationStatusColor(record.moderationStatus)">
-                  {{ getModerationStatusText(record.moderationStatus) }}
-                </a-tag>
+              <template v-else-if="column.key === 'images'">
+                <div v-if="record.imageUrls && record.imageUrls.length > 0" style="width: 50px; height: 50px; overflow: hidden; border-radius: 4px; margin: 0 auto;">
+                  <a-image
+                    :src="`http://localhost:8080${record.imageUrls[0]}`"
+                    :width="50"
+                    :height="50"
+                    :preview="{ src: `http://localhost:8080${record.imageUrls[0]}` }"
+                    style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                  >
+                    <template #placeholder>
+                      <div style="width: 50px; height: 50px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                        加载中
+                      </div>
+                    </template>
+                  </a-image>
+                </div>
+                <span v-else style="color: #999; font-size: 12px;">无图片</span>
               </template>
               <template v-else-if="column.key === 'createdAt'">
                 {{ formatDate(record.createdAt) }}
@@ -226,6 +240,7 @@
             :pagination="reportPagination"
             @change="handleReportTableChange"
             row-key="id"
+            :scroll="{ x: 1100 }"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'reporter'">
@@ -305,12 +320,24 @@
           <a-rate :value="currentReview.rating" disabled allow-half />
         </a-descriptions-item>
         <a-descriptions-item label="评论内容">
-          {{ currentReview.comment }}
+          {{ currentReview.comment || '无评论内容' }}
         </a-descriptions-item>
-        <a-descriptions-item label="审核状态">
-          <a-tag :color="getModerationStatusColor(currentReview.moderationStatus)">
-            {{ getModerationStatusText(currentReview.moderationStatus) }}
-          </a-tag>
+        <a-descriptions-item v-if="currentReview.imageUrls && currentReview.imageUrls.length > 0" label="图片">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <div
+              v-for="(url, index) in currentReview.imageUrls"
+              :key="index"
+              style="width: 80px; height: 80px; overflow: hidden; border-radius: 4px; flex-shrink: 0;"
+            >
+              <a-image
+                :src="`http://localhost:8080${url}`"
+                :width="80"
+                :height="80"
+                :preview="{ src: `http://localhost:8080${url}` }"
+                style="width: 100%; height: 100%; object-fit: cover; display: block;"
+              />
+            </div>
+          </div>
         </a-descriptions-item>
         <a-descriptions-item label="创建时间">
           {{ formatDate(currentReview.createdAt) }}
@@ -369,7 +396,7 @@ import {
   ReloadOutlined,
   SearchOutlined
 } from '@ant-design/icons-vue';
-import axios from 'axios';
+import apiClient from '@/utils/request';
 import reportService from '@/services/admin/reportService';
 
 const router = useRouter();
@@ -406,9 +433,9 @@ const reviewColumns = [
   { title: '摊位', key: 'stall', width: 150 },
   { title: '评分', key: 'rating', width: 150 },
   { title: '评论内容', key: 'comment' },
-  { title: '审核状态', key: 'moderationStatus', width: 100 },
+  { title: '图片', key: 'images', width: 80, align: 'center' },
   { title: '创建时间', key: 'createdAt', width: 180 },
-  { title: '操作', key: 'action', width: 180, fixed: 'right' }
+  { title: '操作', key: 'action', width: 150, fixed: 'right' }
 ];
 
 // 举报相关数据
@@ -452,7 +479,7 @@ const currentReport = ref(null);
 
 // 返回仪表板
 const goToDashboard = () => {
-  router.push('/admin/dashboard');
+  router.back();
 };
 
 // 刷新当前标签页
@@ -484,27 +511,16 @@ const fetchReviews = async () => {
       rating: reviewFilters.rating || undefined
     };
 
-    const token = localStorage.getItem('token');
-    const response = await axios.get('/api/admin/reviews', {
-      params,
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
+    const response = await apiClient.get('/admin/reviews', { params });
     reviews.value = response.data.content || [];
     reviewPagination.total = response.data.totalElements || 0;
 
     // 获取统计数据
-    const statsResponse = await axios.get('/api/admin/reviews/stats', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    reviewStats.value = statsResponse.data;
+    const stats = await apiClient.get('/admin/reviews/stats');
+    reviewStats.value = stats.data;
   } catch (error) {
     console.error('获取评价列表失败:', error);
-    message.error(error.response?.data?.message || '获取评价列表失败');
+    message.error(error.message || '获取评价列表失败');
   } finally {
     reviewLoading.value = false;
   }
@@ -587,17 +603,12 @@ const deleteReview = (record) => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`/api/admin/reviews/${record.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        await apiClient.delete(`/admin/reviews/${record.id}`);
         message.success('删除成功');
         fetchReviews();
       } catch (error) {
         console.error('删除评价失败:', error);
-        message.error('删除评价失败');
+        message.error(error.message || '删除评价失败');
       }
     }
   });
@@ -625,26 +636,6 @@ const handleReport = async (record, status) => {
       }
     }
   });
-};
-
-// 审核状态文本
-const getModerationStatusText = (status) => {
-  const map = {
-    'PENDING': '待审核',
-    'APPROVED': '已通过',
-    'REJECTED': '已驳回'
-  };
-  return map[status] || status;
-};
-
-// 审核状态颜色
-const getModerationStatusColor = (status) => {
-  const map = {
-    'PENDING': 'orange',
-    'APPROVED': 'green',
-    'REJECTED': 'red'
-  };
-  return map[status] || 'default';
 };
 
 // 举报原因文本
@@ -704,10 +695,6 @@ onMounted(() => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
-    background: white;
-    padding: 16px 24px;
-    border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 
     .header-left {
       display: flex;
@@ -715,14 +702,14 @@ onMounted(() => {
 
       h2 {
         margin: 0;
-        font-size: 20px;
+        font-size: 24px;
         font-weight: 600;
-        color: #303133;
+        color: #262626;
       }
 
       .subtitle {
-        margin-left: 12px;
-        color: #909399;
+        margin-left: 16px;
+        color: #8c8c8c;
         font-size: 14px;
       }
     }

@@ -131,17 +131,28 @@
                 <a-tag color="purple-inverse">LOCATION & INFO</a-tag>
               </template>
 
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <a-typography-title :level="5">Location</a-typography-title>
-                <a-button v-if="stall.cafeteria" type="primary" @click="openNavigation" size="small" style="border-radius: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <a-typography-title :level="5" style="margin: 0;">Location</a-typography-title>
+                <a-button v-if="locationInfo" type="primary" @click="openNavigation" size="small" style="border-radius: 6px;">
                   🧭 Navigate
                 </a-button>
               </div>
-              <a-card v-if="stall.cafeteria" :style="{ borderRadius: '12px', marginBottom: '16px' }" :body-style="{ padding: '16px' }">
-                <a-typography-text> {{ stall.cafeteria.name }} </a-typography-text>
+
+              <!-- Location display with map -->
+              <a-card v-if="locationInfo" :style="{ borderRadius: '12px', marginBottom: '16px' }" :body-style="{ padding: '16px' }">
+                <a-typography-text> {{ locationInfo.name }} </a-typography-text>
                 <div style="margin-top: 12px;">
-                  <MapSection :markers="[{ lat: stall.cafeteria.latitude, lng: stall.cafeteria.longitude, label: stall.name }]" height="180px" />
+                  <MapSection :markers="[locationInfo.marker]" height="200px" />
                 </div>
+              </a-card>
+
+              <!-- No location info -->
+              <a-card v-else :style="{ borderRadius: '12px', marginBottom: '16px' }" :body-style="{ padding: '16px' }">
+                <a-empty description="Location information not available" :image="null">
+                  <template #description>
+                    <a-typography-text type="secondary">No location data for this stall yet</a-typography-text>
+                  </template>
+                </a-empty>
               </a-card>
             </a-card>
 
@@ -155,15 +166,25 @@
                       ({{ reviewListRef?.total }})
                     </span>
                   </div>
-                  <a-button
-                    v-if="isAuthenticated"
-                    type="primary"
-                    size="small"
-                    @click="handleWriteReview"
-                  >
-                    <template #icon><EditOutlined /></template>
-                    Write Review
-                  </a-button>
+                  <a-space>
+                    <a-button
+                      v-if="reviewListRef?.total > 0"
+                      type="default"
+                      size="small"
+                      @click="viewAllReviews"
+                    >
+                      查看全部
+                    </a-button>
+                    <a-button
+                      v-if="isAuthenticated"
+                      type="primary"
+                      size="small"
+                      @click="handleWriteReview"
+                    >
+                      <template #icon><EditOutlined /></template>
+                      Write Review
+                    </a-button>
+                  </a-space>
                 </div>
               </template>
 
@@ -267,6 +288,43 @@ const menuImages = computed(() => {
 
 // For compatibility with old code, keep displayImages (points to photoImages)
 const displayImages = photoImages
+
+// Location info computed property (supports both cafeteria and standalone stall)
+const locationInfo = computed(() => {
+  if (!stall.value) return null
+
+  // Priority 1: If stall belongs to a cafeteria
+  if (stall.value.cafeteria && stall.value.cafeteria.latitude && stall.value.cafeteria.longitude) {
+    return {
+      name: stall.value.cafeteria.name,
+      latitude: stall.value.cafeteria.latitude,
+      longitude: stall.value.cafeteria.longitude,
+      marker: {
+        lat: stall.value.cafeteria.latitude,
+        lng: stall.value.cafeteria.longitude,
+        label: stall.value.cafeteria.name,
+        type: 'cafeteria'
+      }
+    }
+  }
+
+  // Priority 2: If stall has its own coordinates (standalone stall)
+  if (stall.value.latitude && stall.value.longitude) {
+    return {
+      name: stall.value.name,
+      latitude: stall.value.latitude,
+      longitude: stall.value.longitude,
+      marker: {
+        lat: stall.value.latitude,
+        lng: stall.value.longitude,
+        label: stall.value.name,
+        type: 'stall'
+      }
+    }
+  }
+
+  return null
+})
 
 onMounted(async () => {
   const stallId = route.params.id
@@ -374,11 +432,11 @@ const handleWriteReview = () => {
 
 // Navigation function
 const openNavigation = () => {
-  if (!stall.value?.cafeteria) return
+  if (!locationInfo.value) return
 
-  const lat = stall.value.cafeteria.latitude
-  const lng = stall.value.cafeteria.longitude
-  const label = encodeURIComponent(stall.value.cafeteria.name)
+  const lat = locationInfo.value.latitude
+  const lng = locationInfo.value.longitude
+  const label = encodeURIComponent(locationInfo.value.name)
 
   const userAgent = navigator.userAgent || navigator.vendor || window.opera
 
@@ -391,6 +449,14 @@ const openNavigation = () => {
   else {
     window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank')
   }
+}
+
+// View all reviews
+const viewAllReviews = () => {
+  router.push({
+    name: 'AllReviews',
+    params: { stallId: route.params.id }
+  })
 }
 
 const cardStyle = {

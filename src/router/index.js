@@ -2,11 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/pages/HomePage.vue'
 import CafeteriaDetail from '@/pages/CafeteriaDetail.vue'
 import StallDetail from '@/pages/StallDetail.vue'
+import AllReviewsPage from '@/pages/AllReviewsPage.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
 import ForgotPassword from '@/pages/ForgotPassword.vue'
 import ProfilePage from '@/pages/ProfilePage.vue'
 import FavoritesPage from '@/pages/FavoritesPage.vue'
+import MyReviewsPage from '@/pages/MyReviewsPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 import AdminLogin from '@/views/admin/AdminLogin.vue'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
@@ -15,6 +17,7 @@ import CafeteriaManagement from '@/views/admin/CafeteriaManagement.vue'
 import StallManagement from '@/views/admin/StallManagement.vue'
 import ContentModeration from '@/views/admin/ContentModeration.vue'
 import ReviewManagement from '@/views/admin/ReviewManagement.vue'
+import ImageManagement from '@/views/admin/ImageManagement.vue'
 import ChangePassword from '@/views/admin/ChangePassword.vue'
 import TokenDebug from '@/views/admin/TokenDebug.vue'
 import authService from '@/services/authService'
@@ -35,6 +38,11 @@ const routes = [
     path: '/stalls/:id',
     name: 'StallDetail',
     component: StallDetail
+  },
+  {
+    path: '/stalls/:stallId/reviews',
+    name: 'AllReviews',
+    component: AllReviewsPage
   },
   {
     path: '/login',
@@ -64,6 +72,12 @@ const routes = [
     path: '/favorites',
     name: 'Favorites',
     component: FavoritesPage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/my-reviews',
+    name: 'MyReviews',
+    component: MyReviewsPage,
     meta: { requiresAuth: true }
   },
   {
@@ -117,6 +131,12 @@ const routes = [
     path: '/admin/reviews',
     name: 'ReviewManagement',
     component: ReviewManagement,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/images',
+    name: 'ImageManagement',
+    component: ImageManagement,
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {

@@ -1,7 +1,4 @@
-import axios from 'axios';
 import apiClient from '@/utils/request';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 /**
  * 评价服务
@@ -19,17 +16,7 @@ const reviewService = {
    */
   async createReview(reviewData) {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API_BASE_URL}/reviews`,
-        reviewData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await apiClient.post('/reviews', reviewData);
       return response.data;
     } catch (error) {
       console.error('创建评价失败:', error);
@@ -45,17 +32,7 @@ const reviewService = {
    */
   async updateReview(reviewId, reviewData) {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${API_BASE_URL}/reviews/${reviewId}`,
-        reviewData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await apiClient.put(`/reviews/${reviewId}`, reviewData);
       return response.data;
     } catch (error) {
       console.error('更新评价失败:', error);
@@ -70,15 +47,7 @@ const reviewService = {
    */
   async deleteReview(reviewId) {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.delete(
-        `${API_BASE_URL}/reviews/${reviewId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await apiClient.delete(`/reviews/${reviewId}`);
       return response.data;
     } catch (error) {
       console.error('删除评价失败:', error);
@@ -93,13 +62,7 @@ const reviewService = {
    */
   async getReviewById(reviewId) {
     try {
-      const token = localStorage.getItem('token');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const response = await axios.get(
-        `${API_BASE_URL}/reviews/${reviewId}`,
-        { headers }
-      );
+      const response = await apiClient.get(`/reviews/${reviewId}`);
       return response.data;
     } catch (error) {
       console.error('获取评价详情失败:', error);
@@ -113,21 +76,16 @@ const reviewService = {
    * @param {Object} options - 查询选项
    * @param {number} options.page - 页码（从0开始）
    * @param {number} options.size - 每页大小（设为0返回所有数据）
+   * @param {string} options.sortBy - 排序方式 (createdAt, likesCount)
+   * @param {string} options.sortOrder - 排序顺序 (asc, desc)
    * @returns {Promise} - 返回评价列表
    */
   async getReviewsByStallId(stallId, options = {}) {
     try {
-      const { page = 0, size = 0 } = options;
-      const token = localStorage.getItem('token');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const response = await axios.get(
-        `${API_BASE_URL}/reviews/stall/${stallId}`,
-        {
-          params: { page, size },
-          headers
-        }
-      );
+      const { page = 0, size = 0, sortBy, sortOrder } = options;
+      const response = await apiClient.get(`/reviews/stall/${stallId}`, {
+        params: { page, size, sortBy, sortOrder }
+      });
       return response.data;
     } catch (error) {
       console.error('获取摊位评价失败:', error);
@@ -146,16 +104,9 @@ const reviewService = {
   async getReviewsByUserId(userId, options = {}) {
     try {
       const { page = 0, size = 0 } = options;
-      const token = localStorage.getItem('token');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const response = await axios.get(
-        `${API_BASE_URL}/reviews/user/${userId}`,
-        {
-          params: { page, size },
-          headers
-        }
-      );
+      const response = await apiClient.get(`/reviews/user/${userId}`, {
+        params: { page, size }
+      });
       return response.data;
     } catch (error) {
       console.error('获取用户评价失败:', error);
@@ -192,6 +143,21 @@ const reviewService = {
       return response.data;
     } catch (error) {
       console.error('举报提交失败:', error);
+      throw error.response?.data || error.message;
+    }
+  },
+
+  /**
+   * 获取摊位的评分分布统计
+   * @param {number} stallId - 摊位ID
+   * @returns {Promise} - 返回评分分布数据
+   */
+  async getRatingDistribution(stallId) {
+    try {
+      const response = await apiClient.get(`/reviews/stall/${stallId}/rating-distribution`);
+      return response.data;
+    } catch (error) {
+      console.error('获取评分分布失败:', error);
       throw error.response?.data || error.message;
     }
   }

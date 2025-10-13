@@ -5,7 +5,15 @@
       <!-- 页面标题 -->
       <div class="page-header">
         <div class="header-left">
-          <HeartFilled class="page-icon" />
+          <a-button
+            type="text"
+            size="large"
+            @click="$router.back()"
+            class="back-btn"
+          >
+            <ArrowLeftOutlined />
+          </a-button>
+          <StarFilled class="page-icon" />
           <div>
             <h1 class="page-title">我的收藏</h1>
             <p class="page-subtitle">共 {{ favorites.length }} 个收藏</p>
@@ -43,7 +51,7 @@
         <div v-if="favorites.length === 0" class="empty-state">
           <a-empty description="暂无收藏">
             <template #image>
-              <HeartOutlined style="font-size: 64px; color: #d9d9d9;" />
+              <StarOutlined style="font-size: 64px; color: #d9d9d9;" />
             </template>
             <a-button type="primary" @click="$router.push('/')">
               去逛逛
@@ -53,41 +61,20 @@
 
         <!-- 收藏列表 -->
         <div v-else>
-          <!-- 拖拽排序提示 -->
-          <a-alert
-            v-if="!isEditMode"
-            message="提示: 按住并拖拽卡片可以调整收藏顺序"
-            type="info"
-            show-icon
-            closable
-            class="drag-tip"
-          />
-
           <!-- 收藏网格 -->
-          <draggable
-            v-model="favorites"
-            item-key="favoriteId"
-            :animation="200"
-            :disabled="isEditMode"
-            class="favorites-grid"
-            @end="handleDragEnd"
-          >
-            <template #item="{ element }">
-              <div
-                class="favorite-card"
-                :class="{ 'edit-mode': isEditMode, 'selected': isSelected(element.favoriteId) }"
-              >
-                <!-- 选择框 -->
-                <div v-if="isEditMode" class="select-overlay" @click="toggleSelect(element.favoriteId)">
-                  <a-checkbox :checked="isSelected(element.favoriteId)" />
-                </div>
+          <div class="favorites-grid">
+            <div
+              v-for="element in favorites"
+              :key="element.favoriteId"
+              class="favorite-card"
+              :class="{ 'edit-mode': isEditMode, 'selected': isSelected(element.favoriteId) }"
+            >
+              <!-- 选择框 -->
+              <div v-if="isEditMode" class="select-overlay" @click="toggleSelect(element.favoriteId)">
+                <a-checkbox :checked="isSelected(element.favoriteId)" />
+              </div>
 
-                <!-- 拖拽手柄 -->
-                <div v-if="!isEditMode" class="drag-handle">
-                  <DragOutlined />
-                </div>
-
-                <!-- 卡片内容 -->
+              <!-- 卡片内容 -->
                 <div class="card-content" @click="!isEditMode && goToStall(element.stallId)">
                   <!-- 图片 -->
                   <div class="favorite-image">
@@ -103,6 +90,16 @@
                     <div v-if="element.halal" class="halal-badge">
                       <span>HALAL</span>
                     </div>
+                    <!-- 收藏按钮 -->
+                    <a-button
+                      v-if="!isEditMode"
+                      type="text"
+                      size="small"
+                      @click.stop="handleRemoveSingle(element.favoriteId)"
+                      class="favorite-star-overlay"
+                    >
+                      <StarFilled />
+                    </a-button>
                   </div>
 
                   <!-- 信息 -->
@@ -139,23 +136,9 @@
                       收藏于 {{ formatDate(element.createdAt) }}
                     </p>
                   </div>
-
-                  <!-- 快速操作 -->
-                  <div v-if="!isEditMode" class="quick-actions">
-                    <a-button
-                      type="text"
-                      danger
-                      size="small"
-                      @click.stop="handleRemoveSingle(element.favoriteId)"
-                    >
-                      <DeleteOutlined />
-                      取消收藏
-                    </a-button>
-                  </div>
                 </div>
-              </div>
-            </template>
-          </draggable>
+            </div>
+          </div>
         </div>
       </a-spin>
     </div>
@@ -167,7 +150,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import {
-  HeartFilled,
   HeartOutlined,
   ShopOutlined,
   EnvironmentOutlined,
@@ -175,9 +157,10 @@ import {
   ClockCircleOutlined,
   EditOutlined,
   DeleteOutlined,
-  DragOutlined
+  StarFilled,
+  StarOutlined,
+  ArrowLeftOutlined
 } from '@ant-design/icons-vue'
-import draggable from 'vuedraggable'
 import { useUserStore } from '@/stores/user'
 import { favoriteService } from '@/services/favoriteService'
 import Header from '@/components/Header.vue'
@@ -208,28 +191,6 @@ const loadFavorites = async () => {
     console.error('Load favorites error:', error)
   } finally {
     loading.value = false
-  }
-}
-
-// 拖拽结束处理
-const handleDragEnd = async () => {
-  try {
-    const userId = userStore.user?.id
-    if (!userId) return
-
-    // 构建排序数据 (使用降序索引,越靠前sortOrder越大)
-    const orders = favorites.value.map((fav, index) => ({
-      favoriteId: fav.favoriteId,
-      sortOrder: favorites.value.length - index
-    }))
-
-    await favoriteService.updateFavoriteOrders(userId.toString(), orders)
-    message.success('排序已保存')
-  } catch (error) {
-    message.error('保存排序失败')
-    console.error('Update order error:', error)
-    // 重新加载以恢复原顺序
-    await loadFavorites()
   }
 }
 
@@ -366,9 +327,23 @@ onMounted(() => {
   gap: 16px;
 }
 
+.back-btn {
+  font-size: 20px;
+  color: #6b7280;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-btn:hover {
+  color: #111827;
+  background-color: #f3f4f6;
+}
+
 .page-icon {
   font-size: 40px;
-  color: #dc2626;
+  color: #fadb14;
 }
 
 .page-title {
@@ -388,11 +363,6 @@ onMounted(() => {
 .header-actions {
   display: flex;
   gap: 12px;
-}
-
-/* 拖拽提示 */
-.drag-tip {
-  margin-bottom: 24px;
 }
 
 /* 空状态 */
@@ -418,11 +388,6 @@ onMounted(() => {
   overflow: hidden;
   transition: all 0.3s ease;
   position: relative;
-  cursor: grab;
-}
-
-.favorite-card:active {
-  cursor: grabbing;
 }
 
 .favorite-card:hover {
@@ -461,29 +426,6 @@ onMounted(() => {
 
 .favorite-card.selected .select-overlay {
   background: rgba(24, 144, 255, 0.1);
-}
-
-/* 拖拽手柄 */
-.drag-handle {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 36px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  color: #6b7280;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 1;
-  cursor: grab;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
 }
 
 /* 卡片内容 */
@@ -539,6 +481,37 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
+/* 收藏按钮悬浮在图片右下角 */
+.favorite-star-overlay {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #fadb14;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+  padding: 0;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+}
+
+.favorite-star-overlay:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(250, 219, 20, 0.4);
+  background: rgba(255, 255, 255, 1);
+}
+
+.favorite-star-overlay:active {
+  transform: scale(0.95);
+}
+
 /* 信息区域 */
 .favorite-info {
   padding: 20px;
@@ -583,17 +556,6 @@ onMounted(() => {
 .review-count {
   font-size: 14px;
   color: #9ca3af;
-}
-
-/* 快速操作 */
-.quick-actions {
-  padding: 16px 20px;
-  border-top: 1px solid #f3f4f6;
-  text-align: center;
-}
-
-.quick-actions .ant-btn {
-  width: 100%;
 }
 
 /* 响应式设计 */

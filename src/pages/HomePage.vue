@@ -65,7 +65,14 @@
           <a-col :xs="24" :lg="18">
             <!-- Map section at top of right column -->
             <div style="margin-bottom: 24px;">
-              <MapSection :markers="homeMarkers" height="360px" :focus-id="focusId" :route-on-click="true" @marker-click="focusAndScroll" />
+              <MapSection
+                :markers="homeMarkers"
+                height="360px"
+                :focus-id="focusId"
+                :route-on-click="true"
+                @marker-click="focusAndScroll"
+                @bounds-changed="handleMapBoundsChanged"
+              />
             </div>
             <a-card :style="cardStyle" :body-style="{ padding: '28px' }">
               <div :style="cardHeaderStyle">
@@ -103,7 +110,8 @@ import StallCard from '@/components/StallCard.vue'
 import { useStallStore } from '@/stores/stall';
 import { useRoute, useRouter } from 'vue-router'
 import { ref, computed, watch, onMounted } from 'vue'
-import { storeToRefs } from 'pinia';
+import { storeToRefs } from 'pinia'
+import { getCafeterias } from '@/services/cafeteriaService';
 
 const cardStyle = { borderRadius: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.03)' }
 const cardHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', paddingBottom: '16px', borderBottom: '2px solid #f1f5f9' }
@@ -115,12 +123,16 @@ const pillBtnGold = { background: 'rgba(251, 191, 36, 0.1)', borderColor: 'rgba(
 const stallStore = useStallStore();
 const { stalls: sourceStalls, loading, error } = storeToRefs(stallStore);
 
+// Cafeterias data
+const cafeterias = ref([]);
+
 // Filter state
 const selectedCuisines = ref(new Set())
 const openNow = ref(false)
 const distanceKm = ref(2.0)
 const priceRange = ref([0, 50])
 const sortByRating = ref(false)
+const mapBounds = ref(null) // Store current map bounds for filtering
 
 // Options
 const cuisineCats = [
@@ -153,6 +165,7 @@ const getCuisineBtnStyle = (cuisineName) => {
 const filtered = computed(() => {
   const cuisines = selectedCuisines.value
   const keyword = route.query.keyword
+  const bounds = mapBounds.value
 
   let list = sourceStalls.value.filter(s => {
     // Filter by keyword (search in name and cuisine)
@@ -169,6 +182,18 @@ const filtered = computed(() => {
     if (cuisines.size > 0 && s.cuisine && !cuisines.has(s.cuisine)) {
       return false
     }
+
+    // Filter by map bounds (only show stalls within visible area)
+    if (bounds) {
+      const stallLocation = getStallLocation(s)
+      if (stallLocation) {
+        const { lat, lng } = stallLocation
+        if (lat < bounds.south || lat > bounds.north || lng < bounds.west || lng > bounds.east) {
+          return false
+        }
+      }
+    }
+
     // Filter by open now (if backend provides isOpen data)
     // if (openNow.value && !s.isOpen) return false
     return true
@@ -176,6 +201,20 @@ const filtered = computed(() => {
   if (sortByRating.value) list = [...list].sort((a,b) => (b.averageRating || 0) - (a.averageRating || 0))
   return list
 })
+
+// Helper function to get stall location (from cafeteria or its own coordinates)
+const getStallLocation = (stall) => {
+  // Get location from cafeteria if available
+  const cafeteria = cafeterias.value.find(c => c.id === stall.cafeteriaId)
+  if (cafeteria && cafeteria.latitude && cafeteria.longitude) {
+    return { lat: cafeteria.latitude, lng: cafeteria.longitude }
+  }
+  // Otherwise use stall's own coordinates if available
+  if (stall.latitude && stall.longitude) {
+    return { lat: stall.latitude, lng: stall.longitude }
+  }
+  return null
+}
 
 const mapToCard = (s) => ({
   id: s.id,
@@ -191,15 +230,56 @@ const mapToCard = (s) => ({
 })
 
 const filteredCards = computed(() => filtered.value.map(mapToCard))
+
+// 地图标记:包含所有cafeterias + 不属于任何cafeteria的stalls
 const homeMarkers = computed(() => {
-  // Since stalls don't have lat/lng, we need to get it from cafeteria
-  // For now, return empty array or mock data
-  return []
+  const markers = []
+
+  // 添加所有cafeterias
+  cafeterias.value.forEach(cafeteria => {
+    if (cafeteria.latitude && cafeteria.longitude) {
+      markers.push({
+        id: `cafeteria-${cafeteria.id}`,
+        lat: cafeteria.latitude,
+        lng: cafeteria.longitude,
+        label: cafeteria.name,
+        type: 'cafeteria'
+      })
+    }
+  })
+
+  // 添加不属于任何cafeteria的stalls (cafeteria为null或undefined)
+  sourceStalls.value.forEach(stall => {
+    // 检查stall是否有cafeteria关联
+    if (!stall.cafeteriaId && stall.latitude && stall.longitude) {
+      markers.push({
+        id: `stall-${stall.id}`,
+        lat: stall.latitude,
+        lng: stall.longitude,
+        label: stall.name,
+        type: 'stall'
+      })
+    }
+  })
+
+  return markers
 })
 
 // Map <-> List linking
 const focusId = ref(null)
-const onHover = (id) => { focusId.value = id }
+const onHover = (id) => {
+  // When hovering over a stall card, focus on its cafeteria or stall marker
+  const stall = sourceStalls.value.find(s => s.id === id)
+  if (!stall) return
+
+  // Try to find corresponding cafeteria marker
+  if (stall.cafeteriaId) {
+    focusId.value = `cafeteria-${stall.cafeteriaId}`
+  } else {
+    // Or use the stall's own marker if it's standalone
+    focusId.value = `stall-${id}`
+  }
+}
 const onLeave = () => { focusId.value = null }
 
 const cardRefs = new Map()
@@ -218,12 +298,21 @@ const toggleCuisine = (name) => {
 }
 const toggleSort = () => { sortByRating.value = !sortByRating.value }
 
+// Handle map bounds change
+const handleMapBoundsChanged = (bounds) => {
+  mapBounds.value = bounds
+}
+
 // URL sync
 const route = useRoute()
 const router = useRouter()
 
-onMounted(() => {
-  stallStore.fetchStalls();
+onMounted(async () => {
+  // 并行加载stalls和cafeterias
+  await Promise.all([
+    stallStore.fetchStalls(),
+    loadCafeterias()
+  ])
 
   const q = route.query
   if (q.cuisines) {
@@ -234,6 +323,16 @@ onMounted(() => {
   if (q.dist) distanceKm.value = Math.min(2, Math.max(0, Number(q.dist)))
   if (q.sort === 'rating') sortByRating.value = true
 })
+
+// 加载cafeterias数据
+const loadCafeterias = async () => {
+  try {
+    const response = await getCafeterias()
+    cafeterias.value = response.data || []
+  } catch (err) {
+    console.error('Failed to load cafeterias:', err)
+  }
+}
 
 watch([selectedCuisines, openNow, distanceKm, sortByRating], () => {
   const cuisines = Array.from(selectedCuisines.value)

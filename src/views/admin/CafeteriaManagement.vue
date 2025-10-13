@@ -116,43 +116,32 @@
       />
     </a-modal>
 
-    <!-- 食堂详情抽屉 -->
-    <a-drawer
+    <!-- 食堂详情模态框 -->
+    <a-modal
       v-model:open="detailDrawerVisible"
       title="食堂详情"
-      :width="720"
-      placement="right"
+      :footer="null"
+      width="600px"
     >
-      <div v-if="selectedCafeteria" class="cafeteria-detail">
-        <a-descriptions title="基本信息" bordered :column="1">
-          <a-descriptions-item label="ID">{{ selectedCafeteria.id }}</a-descriptions-item>
-          <a-descriptions-item label="名称">{{ selectedCafeteria.name }}</a-descriptions-item>
-          <a-descriptions-item label="描述">{{ selectedCafeteria.description }}</a-descriptions-item>
-          <a-descriptions-item label="位置">{{ selectedCafeteria.location }}</a-descriptions-item>
-          <a-descriptions-item label="坐标">
-            {{ selectedCafeteria.latitude }}, {{ selectedCafeteria.longitude }}
-          </a-descriptions-item>
-          <a-descriptions-item label="座位数">{{ selectedCafeteria.seatingCapacity }}</a-descriptions-item>
-          <a-descriptions-item label="清真/素食">{{ selectedCafeteria.halalInfo || '无' }}</a-descriptions-item>
-          <a-descriptions-item label="最近巴士站">{{ selectedCafeteria.nearestBusStop }}</a-descriptions-item>
-          <a-descriptions-item label="最近停车场">{{ selectedCafeteria.nearestCarpark }}</a-descriptions-item>
-        </a-descriptions>
-
-        <a-divider />
-
-        <a-descriptions title="营业时间" bordered :column="1">
-          <a-descriptions-item label="学期时间">{{ selectedCafeteria.termTimeOpeningHours }}</a-descriptions-item>
-          <a-descriptions-item label="假期时间">{{ selectedCafeteria.vacationOpeningHours }}</a-descriptions-item>
-        </a-descriptions>
-
-        <a-divider />
-
-        <div v-if="selectedCafeteria.imageUrl">
-          <h3>食堂图片</h3>
-          <img :src="selectedCafeteria.imageUrl" alt="食堂图片" style="max-width: 100%; border-radius: 8px;" />
-        </div>
-      </div>
-    </a-drawer>
+      <a-descriptions v-if="selectedCafeteria" :column="1" bordered>
+        <a-descriptions-item label="ID">{{ selectedCafeteria.id }}</a-descriptions-item>
+        <a-descriptions-item label="名称">{{ selectedCafeteria.name }}</a-descriptions-item>
+        <a-descriptions-item label="描述">{{ selectedCafeteria.description }}</a-descriptions-item>
+        <a-descriptions-item label="位置">{{ selectedCafeteria.location }}</a-descriptions-item>
+        <a-descriptions-item label="坐标">
+          {{ selectedCafeteria.latitude }}, {{ selectedCafeteria.longitude }}
+        </a-descriptions-item>
+        <a-descriptions-item label="座位数">{{ selectedCafeteria.seatingCapacity }}</a-descriptions-item>
+        <a-descriptions-item label="清真/素食">{{ selectedCafeteria.halalInfo || '无' }}</a-descriptions-item>
+        <a-descriptions-item label="最近巴士站">{{ selectedCafeteria.nearestBusStop }}</a-descriptions-item>
+        <a-descriptions-item label="最近停车场">{{ selectedCafeteria.nearestCarpark }}</a-descriptions-item>
+        <a-descriptions-item label="学期营业时间">{{ selectedCafeteria.termTimeOpeningHours }}</a-descriptions-item>
+        <a-descriptions-item label="假期营业时间">{{ selectedCafeteria.vacationOpeningHours }}</a-descriptions-item>
+        <a-descriptions-item v-if="selectedCafeteria.imageUrl" label="食堂图片">
+          <img :src="selectedCafeteria.imageUrl" alt="食堂图片" style="max-width: 100%; border-radius: 8px; margin-top: 8px;" />
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-modal>
   </div>
 </template>
 
@@ -242,7 +231,7 @@ const isOpen = (cafeteria) => {
 
 // 返回dashboard
 const goToDashboard = () => {
-  router.push('/admin/dashboard');
+  router.back();
 };
 
 // 获取食堂列表

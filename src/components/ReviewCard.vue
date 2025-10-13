@@ -86,6 +86,7 @@
 
           <!-- 举报按钮 -->
           <a-button
+            v-if="showReportButton"
             type="link"
             size="small"
             @click="handleReport"
@@ -174,6 +175,10 @@ const props = defineProps({
   showStallName: {
     type: Boolean,
     default: false
+  },
+  showReportButton: {
+    type: Boolean,
+    default: true
   }
 });
 
