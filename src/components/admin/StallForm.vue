@@ -92,6 +92,36 @@
         />
       </a-form-item>
 
+      <a-row :gutter="16">
+        <a-col :span="12">
+          <a-form-item label="纬度 (Latitude)" name="latitude">
+            <a-input-number
+              v-model:value="formData.latitude"
+              placeholder="例: 1.2966"
+              :precision="6"
+              :step="0.000001"
+              :min="-90"
+              :max="90"
+              style="width: 100%"
+            />
+          </a-form-item>
+        </a-col>
+
+        <a-col :span="12">
+          <a-form-item label="经度 (Longitude)" name="longitude">
+            <a-input-number
+              v-model:value="formData.longitude"
+              placeholder="例: 103.7764"
+              :precision="6"
+              :step="0.000001"
+              :min="-180"
+              :max="180"
+              style="width: 100%"
+            />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
       <a-form-item label="封面图片URL" name="imageUrl">
         <a-input
           v-model:value="formData.imageUrl"
@@ -191,6 +221,8 @@ const formData = reactive({
   halalInfo: '',
   contact: '',
   imageUrl: '',
+  latitude: null,
+  longitude: null,
   averageRating: 0,
   reviewCount: 0,
   images: []
@@ -233,6 +265,8 @@ watch(
         halalInfo: newData.halalInfo || '',
         contact: newData.contact || '',
         imageUrl: newData.imageUrl || '',
+        latitude: newData.latitude || null,
+        longitude: newData.longitude || null,
         averageRating: newData.averageRating || 0,
         reviewCount: newData.reviewCount || 0,
         images: newData.images || []
@@ -282,7 +316,9 @@ const handleSubmit = async () => {
       cafeteriaId: formData.cafeteriaId,
       halalInfo: formData.halalInfo,
       contact: formData.contact,
-      imageUrl: formData.imageUrl
+      imageUrl: formData.imageUrl,
+      latitude: formData.latitude,
+      longitude: formData.longitude
     };
 
     // 调试：表单提交
@@ -319,6 +355,8 @@ const resetForm = () => {
     halalInfo: '',
     contact: '',
     imageUrl: '',
+    latitude: null,
+    longitude: null,
     averageRating: 0,
     reviewCount: 0,
     images: []

@@ -40,6 +40,55 @@
           />
         </a-form-item>
 
+        <!-- 花费信息（可选） -->
+        <a-form-item label="消费信息（可选）">
+          <a-space direction="vertical" style="width: 100%;">
+            <div class="cost-info-section">
+              <a-row :gutter="16">
+                <a-col :span="12">
+                  <a-form-item
+                    label="总花费 ($)"
+                    name="totalCost"
+                    :rules="[
+                      { type: 'number', min: 0.01, message: '总花费必须大于0' }
+                    ]"
+                  >
+                    <a-input-number
+                      v-model:value="formState.totalCost"
+                      placeholder="例如: 15.50"
+                      :min="0.01"
+                      :step="0.5"
+                      :precision="2"
+                      style="width: 100%;"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item
+                    label="用餐人数"
+                    name="numberOfPeople"
+                    :rules="[
+                      { type: 'number', min: 1, message: '用餐人数至少为1人' }
+                    ]"
+                  >
+                    <a-input-number
+                      v-model:value="formState.numberOfPeople"
+                      placeholder="例如: 2"
+                      :min="1"
+                      :step="1"
+                      style="width: 100%;"
+                    />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+            </div>
+            <div class="upload-tips">
+              <InfoCircleOutlined />
+              填写消费信息可以帮助其他用户了解人均价格
+            </div>
+          </a-space>
+        </a-form-item>
+
         <!-- 图片上传 -->
         <a-form-item label="上传图片（可选）">
           <ImageUpload
@@ -94,7 +143,9 @@ const submitting = ref(false);
 const formState = reactive({
   rating: props.editReview?.rating || 0,
   comment: props.editReview?.comment || '',
-  imageUrls: props.editReview?.imageUrls || []
+  imageUrls: props.editReview?.imageUrls || [],
+  totalCost: props.editReview?.totalCost || null,
+  numberOfPeople: props.editReview?.numberOfPeople || null
 });
 
 // 监听 editReview 变化
@@ -104,6 +155,8 @@ watch(() => props.editReview, (newVal) => {
     formState.rating = newVal.rating;
     formState.comment = newVal.comment;
     formState.imageUrls = newVal.imageUrls || [];
+    formState.totalCost = newVal.totalCost || null;
+    formState.numberOfPeople = newVal.numberOfPeople || null;
   } else {
     editMode.value = false;
     resetForm();
@@ -119,7 +172,9 @@ const handleSubmit = async () => {
       const response = await reviewService.updateReview(props.editReview.id, {
         rating: formState.rating,
         comment: formState.comment,
-        imageUrls: formState.imageUrls
+        imageUrls: formState.imageUrls,
+        totalCost: formState.totalCost,
+        numberOfPeople: formState.numberOfPeople
       });
 
       if (response.success) {
@@ -135,7 +190,9 @@ const handleSubmit = async () => {
         stallId: props.stallId,
         rating: formState.rating,
         comment: formState.comment,
-        imageUrls: formState.imageUrls
+        imageUrls: formState.imageUrls,
+        totalCost: formState.totalCost,
+        numberOfPeople: formState.numberOfPeople
       });
 
       if (response.success) {
@@ -163,6 +220,8 @@ const resetForm = () => {
   formState.rating = 0;
   formState.comment = '';
   formState.imageUrls = [];
+  formState.totalCost = null;
+  formState.numberOfPeople = null;
 };
 </script>
 
@@ -181,6 +240,10 @@ const resetForm = () => {
   font-size: 16px;
   font-weight: 500;
   color: #f7931e;
+}
+
+.cost-info-section {
+  width: 100%;
 }
 
 .upload-tips {

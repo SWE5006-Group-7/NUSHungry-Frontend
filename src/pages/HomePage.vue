@@ -10,7 +10,7 @@
             <a-space direction="vertical" :style="{ width: '100%', position: 'sticky', top: '96px' }">
               <a-card :style="cardStyle" :body-style="{ padding: '16px' }">
                 <a-row :gutter="[12,12]">
-                  <a-col :span="12" v-for="cat in cuisineCats" :key="cat.name">
+                  <a-col :xs="8" :lg="12" v-for="cat in cuisineCats" :key="cat.name">
                     <a-button 
                       block 
                       :style="getCuisineBtnStyle(cat.name)" 
@@ -36,27 +36,35 @@
               </a-card>
 
               <a-card :style="cardStyle" :body-style="{ padding: '16px' }">
-                <a-typography-title :level="5" style="margin-top:0">Opening Hours</a-typography-title>
-                <a-space direction="vertical">
-                  <a-checkbox v-model:checked="openNow">Open now</a-checkbox>
-                </a-space>
-              </a-card>
+                <a-row :gutter="[16, 16]" class="compact-filters">
+                  <!-- Opening Hours section - takes full width on large screens, left column on small screens -->
+                  <a-col :xs="10" :lg="24" class="opening-section">
+                    <a-typography-title :level="5" style="margin-top:0; margin-bottom: 12px;">Opening Hours</a-typography-title>
+                    <a-space direction="vertical">
+                      <a-checkbox v-model:checked="openNow">Open now</a-checkbox>
+                    </a-space>
+                  </a-col>
 
-              <a-card :style="cardStyle" :body-style="{ padding: '16px' }">
-                <a-typography-title :level="5" style="margin-top:0">Distance</a-typography-title>
-                <a-slider :min="0" :max="2" :step="0.1" v-model:value="distanceKm" />
-                <div style="display:flex; justify-content:space-between; color:#64748b; font-size:12px;">
-                  <span>{{ distanceKm.toFixed(1) }} km</span>
-                  <span>2.0 km</span>
-                </div>
-              </a-card>
+                  <!-- Distance and Price section - stacked vertically on both screen sizes, right column on small screens -->
+                  <a-col :xs="14" :lg="24" class="range-section">
+                    <div style="margin-bottom: 16px;">
+                      <a-typography-title :level="5" style="margin-top:0; margin-bottom: 8px;">Distance</a-typography-title>
+                      <a-slider :min="0" :max="2" :step="0.1" v-model:value="distanceKm" />
+                      <div style="display:flex; justify-content:space-between; color:#64748b; font-size:12px; margin-top: 4px;">
+                        <span>{{ distanceKm.toFixed(1) }} km</span>
+                        <span>2.0 km</span>
+                      </div>
+                    </div>
 
-              <a-card :style="cardStyle" :body-style="{ padding: '16px' }">
-                <a-typography-title :level="5" style="margin-top:0">Price Range</a-typography-title>
-                <a-slider range :min="0" :max="50" v-model:value="priceRange" />
-                <div style="display:flex; justify-content:space-between; color:#64748b; font-size:12px;">
-                  <span>$0 - ${{ priceRange[1] }}</span>
-                </div>
+                    <div>
+                      <a-typography-title :level="5" style="margin-top:0; margin-bottom: 8px;">Price Range</a-typography-title>
+                      <a-slider range :min="0" :max="50" v-model:value="priceRange" />
+                      <div style="display:flex; justify-content:space-between; color:#64748b; font-size:12px; margin-top: 4px;">
+                        <span>$0 - ${{ priceRange[1] }}</span>
+                      </div>
+                    </div>
+                  </a-col>
+                </a-row>
               </a-card>
             </a-space>
           </a-col>
@@ -79,8 +87,8 @@
               <div :style="cardHeaderStyle">
                 <a-typography-title :level="3" :style="{ margin: 0, color: '#1f2937', fontWeight: 700 }">Nearby Stalls</a-typography-title>
                 <a-space>
-                  <a-button size="middle" :style="pillBtnBlue" @click="openNow = !openNow">Opening</a-button>
-                  <a-button size="middle" :style="pillBtnGold" @click="toggleSort">Sort by Rating</a-button>
+                  <a-button size="middle" :style="getOpeningBtnStyle" @click="openNow = !openNow">Opening</a-button>
+                  <a-button size="middle" :style="getSortBtnStyle" @click="toggleSort">Sort by Rating</a-button>
                 </a-space>
               </div>
 
@@ -113,12 +121,23 @@ import { useRoute, useRouter } from 'vue-router'
 import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { getCafeterias } from '@/services/cafeteriaService';
+import { calculateDistance, formatDistance } from '@/utils/distance';
 
 const cardStyle = { borderRadius: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.03)' }
 const cardHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', paddingBottom: '16px', borderBottom: '2px solid #f1f5f9' }
 const footerStyle = { textAlign: 'center', background: '#000000', padding: '32px 24px', marginTop: '40px' }
-const pillBtnBlue = { background: 'rgba(102, 126, 234, 0.1)', borderColor: 'rgba(102, 126, 234, 0.2)', color: '#667eea', fontWeight: 500 }
-const pillBtnGold = { background: 'rgba(251, 191, 36, 0.1)', borderColor: 'rgba(251, 191, 36, 0.2)', color: '#f7931e', fontWeight: 500 }
+// Dynamic button styles
+const getOpeningBtnStyle = computed(() => {
+  return openNow.value
+    ? { background: 'rgba(82, 196, 26, 0.1)', borderColor: 'rgba(82, 196, 26, 0.2)', color: '#52c41a', fontWeight: 500, transition: 'all 0.2s ease' }
+    : { background: '#ffffff', borderColor: '#000000', color: '#000000', fontWeight: 500, transition: 'all 0.2s ease' }
+})
+
+const getSortBtnStyle = computed(() => {
+  return sortByRating.value
+    ? { background: 'rgba(251, 191, 36, 0.1)', borderColor: 'rgba(251, 191, 36, 0.2)', color: '#f7931e', fontWeight: 500, transition: 'all 0.2s ease' }
+    : { background: '#ffffff', borderColor: '#000000', color: '#000000', fontWeight: 500, transition: 'all 0.2s ease' }
+})
 
 // Store
 const stallStore = useStallStore();
@@ -134,6 +153,7 @@ const distanceKm = ref(2.0)
 const priceRange = ref([0, 50])
 const sortByRating = ref(false)
 const mapBounds = ref(null) // Store current map bounds for filtering
+const userLocation = ref(null) // User's current location for distance calculation
 
 // Options
 const cuisineCats = [
@@ -167,6 +187,7 @@ const filtered = computed(() => {
   const cuisines = selectedCuisines.value
   const keyword = route.query.keyword
   const bounds = mapBounds.value
+  const maxDistanceKm = distanceKm.value
 
   let list = sourceStalls.value.filter(s => {
     // Filter by keyword (search in name and cuisine)
@@ -195,6 +216,22 @@ const filtered = computed(() => {
       }
     }
 
+    // Filter by distance from user location
+    if (userLocation.value && maxDistanceKm < 2.0) {
+      const stallLocation = getStallLocation(s)
+      if (stallLocation) {
+        const distance = calculateDistance(
+          userLocation.value.lat,
+          userLocation.value.lng,
+          stallLocation.lat,
+          stallLocation.lng
+        )
+        if (distance > maxDistanceKm) {
+          return false
+        }
+      }
+    }
+
     // Filter by open now (if backend provides isOpen data)
     // if (openNow.value && !s.isOpen) return false
     return true
@@ -217,18 +254,35 @@ const getStallLocation = (stall) => {
   return null
 }
 
-const mapToCard = (s) => ({
-  id: s.id,
-  name: s.name,
-  cuisine: s.cuisine || 'Various',
-  cafeteriaName: s.cafeteriaName || 'NUS Cafeteria',
-  rating: s.averageRating || 0,
-  reviews: s.reviewCount || 0,
-  distance: `0.8 km`, // Mock data, as backend doesn't provide it
-  image: s.imageUrl || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop',
-  halal: s.halal || false,
-  isOpen: true, // Mock data
-})
+const mapToCard = (s) => {
+  let distance = 'N/A'
+  if (userLocation.value) {
+    const stallLocation = getStallLocation(s)
+    if (stallLocation) {
+      const distanceKm = calculateDistance(
+        userLocation.value.lat,
+        userLocation.value.lng,
+        stallLocation.lat,
+        stallLocation.lng
+      )
+      distance = formatDistance(distanceKm)
+    }
+  }
+
+  return {
+    id: s.id,
+    name: s.name,
+    cuisine: s.cuisine || 'Various',
+    cafeteriaName: s.cafeteriaName || 'NUS Cafeteria',
+    rating: s.averageRating || 0,
+    reviews: s.reviewCount || 0,
+    averagePrice: s.averagePrice || 0,
+    distance,
+    image: s.imageUrl || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop',
+    halal: s.halal || false,
+    isOpen: true, // Mock data
+  }
+}
 
 const filteredCards = computed(() => filtered.value.map(mapToCard))
 
@@ -321,6 +375,9 @@ onMounted(async () => {
     loadCafeterias()
   ])
 
+  // Get user location for distance calculation
+  getUserLocation()
+
   const q = route.query
   if (q.cuisines) {
     const arr = String(q.cuisines).split(',').filter(Boolean)
@@ -339,6 +396,29 @@ const loadCafeterias = async () => {
   } catch (err) {
     console.error('Failed to load cafeterias:', err)
   }
+}
+
+// 获取用户位置
+const getUserLocation = () => {
+  if (!navigator.geolocation) {
+    console.warn('Geolocation is not supported by this browser')
+    return
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords
+      userLocation.value = { lat: latitude, lng: longitude }
+    },
+    (error) => {
+      console.warn('Error getting user location:', error.message)
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0
+    }
+  )
 }
 
 watch([selectedCuisines, openNow, distanceKm, sortByRating], () => {
@@ -410,5 +490,32 @@ watch([selectedCuisines, openNow, distanceKm, sortByRating], () => {
 .cuisine-btn[data-selected="true"] .cuisine-text {
   font-weight: 600;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Compact filters layout */
+.compact-filters {
+  align-items: flex-start;
+}
+
+/* On small screens (xs), add separator between opening and range sections */
+@media (max-width: 991px) {
+  .opening-section {
+    border-right: 1px solid #f0f0f0;
+    padding-right: 12px !important;
+  }
+  
+  .range-section {
+    padding-left: 12px !important;
+  }
+}
+
+/* On large screens (lg), remove the border and stack vertically */
+@media (min-width: 992px) {
+  .opening-section {
+    border-right: none;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 16px;
+  }
 }
 </style>

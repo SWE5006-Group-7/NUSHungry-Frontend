@@ -26,13 +26,18 @@
           <a-tag v-if="stall.cuisine">{{ stall.cuisine }}</a-tag>
           <a-tag v-if="stall.halal" color="green">Halal</a-tag>
         </div>
-        <a-tag v-if="stall.cafeteriaName" color="blue" style="flex-shrink: 0;">{{ stall.cafeteriaName }}</a-tag>
+        <a-tag v-if="stall.cafeteriaName" color="blue" style="flex-shrink: 0; margin: 0;">{{ stall.cafeteriaName }}</a-tag>
       </div>
 
-      <div style="margin-top: 10px; display:flex; align-items:center;">
-        <a-rate :value="stall.rating || 0" disabled style="font-size:14px; margin-right:6px" />
-        <strong style="color:#f7931e;">{{ stall.rating || 0 }}</strong>
-        <a-typography-text type="secondary" style="margin-left:8px">· {{ stall.reviews || 0 }} reviews</a-typography-text>
+      <div style="margin-top: 10px; display:flex; align-items:center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; flex: 1; min-width: 0;">
+          <a-rate :value="stall.rating || 0" disabled style="font-size:14px; margin-right:6px" />
+          <strong style="color:#f7931e;">{{ stall.rating || 0 }}</strong>
+          <a-typography-text type="secondary" style="margin-left:8px">· {{ stall.reviews || 0 }} reviews</a-typography-text>
+        </div>
+        <a-tag v-if="stall.averagePrice && stall.averagePrice > 0" color="default" style="flex-shrink: 0; margin: 0;">
+          ${{ stall.averagePrice.toFixed(2) }} per
+        </a-tag>
       </div>
     </div>
   </a-card>

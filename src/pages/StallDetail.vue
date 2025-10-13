@@ -64,7 +64,9 @@
                       · {{ stall.reviewCount || 0 }} reviews
                     </a-typography-text>
                   </a-space>
-                  <a-typography-text type="secondary">Average price: $10-15</a-typography-text>
+                  <a-typography-text type="secondary">
+                    Average price: {{ stall.averagePrice && stall.averagePrice > 0 ? `~$${stall.averagePrice.toFixed(2)} per person` : 'No price info yet' }}
+                  </a-typography-text>
                 </a-space>
               </div>
             </a-card>
