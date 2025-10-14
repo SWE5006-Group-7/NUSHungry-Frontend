@@ -15,8 +15,11 @@ export const useStallStore = defineStore('stall', {
       this.error = null;
       try {
         const response = await getStalls();
-        this.stalls = response.data;
+        // Ensure response.data is an array
+        this.stalls = Array.isArray(response.data) ? response.data : [];
+        console.log('Fetched stalls:', this.stalls.length);
       } catch (err) {
+        console.error('Failed to fetch stalls:', err);
         this.error = err.message || 'Failed to fetch stalls';
         this.stalls = [];
       } finally {

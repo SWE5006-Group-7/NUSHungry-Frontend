@@ -47,8 +47,24 @@ apiClient.interceptors.response.use(
     if (error.response) {
       const status = error.response.status
 
-      // 401 或 403 都表示token过期或无效
-      if ((status === 401 || status === 403) && !originalRequest._retry) {
+      // 403表示权限不足，不应该尝试刷新token
+      if (status === 403) {
+        // 对于权限不足的情况，直接返回错误，不尝试刷新token
+        return Promise.reject(error)
+      }
+
+      // 401表示token过期或无效
+      if (status === 401 && !originalRequest._retry) {
+        // 如果是登录、注册或刷新token端点失败，直接返回错误，不做处理
+        if (originalRequest.url && (
+          originalRequest.url.includes('/auth/login') ||
+          originalRequest.url.includes('/auth/register') ||
+          originalRequest.url.includes('/admin/auth/login') ||
+          originalRequest.url.includes('/auth/refresh')
+        )) {
+          return Promise.reject(error)
+        }
+
         // 如果是refresh端点失败,直接跳转登录
         if (originalRequest.url && originalRequest.url.includes('/auth/refresh')) {
           localStorage.removeItem('token')

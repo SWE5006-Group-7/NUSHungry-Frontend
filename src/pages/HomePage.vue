@@ -189,6 +189,11 @@ const filtered = computed(() => {
   const bounds = mapBounds.value
   const maxDistanceKm = distanceKm.value
 
+  // Defensive check: ensure sourceStalls is an array
+  if (!Array.isArray(sourceStalls.value)) {
+    return []
+  }
+
   let list = sourceStalls.value.filter(s => {
     // Filter by keyword (search in name and cuisine)
     if (keyword) {
@@ -243,9 +248,11 @@ const filtered = computed(() => {
 // Helper function to get stall location (from cafeteria or its own coordinates)
 const getStallLocation = (stall) => {
   // Get location from cafeteria if available
-  const cafeteria = cafeterias.value.find(c => c.id === stall.cafeteriaId)
-  if (cafeteria && cafeteria.latitude && cafeteria.longitude) {
-    return { lat: cafeteria.latitude, lng: cafeteria.longitude }
+  if (Array.isArray(cafeterias.value)) {
+    const cafeteria = cafeterias.value.find(c => c.id === stall.cafeteriaId)
+    if (cafeteria && cafeteria.latitude && cafeteria.longitude) {
+      return { lat: cafeteria.latitude, lng: cafeteria.longitude }
+    }
   }
   // Otherwise use stall's own coordinates if available
   if (stall.latitude && stall.longitude) {
@@ -290,32 +297,36 @@ const filteredCards = computed(() => filtered.value.map(mapToCard))
 const homeMarkers = computed(() => {
   const markers = []
 
-  // 添加所有cafeterias
-  cafeterias.value.forEach(cafeteria => {
-    if (cafeteria.latitude && cafeteria.longitude) {
-      markers.push({
-        id: `cafeteria-${cafeteria.id}`,
-        lat: cafeteria.latitude,
-        lng: cafeteria.longitude,
-        label: cafeteria.name,
-        type: 'cafeteria'
-      })
-    }
-  })
+  // 添加所有cafeterias - with defensive check
+  if (Array.isArray(cafeterias.value)) {
+    cafeterias.value.forEach(cafeteria => {
+      if (cafeteria.latitude && cafeteria.longitude) {
+        markers.push({
+          id: `cafeteria-${cafeteria.id}`,
+          lat: cafeteria.latitude,
+          lng: cafeteria.longitude,
+          label: cafeteria.name,
+          type: 'cafeteria'
+        })
+      }
+    })
+  }
 
-  // 添加不属于任何cafeteria的stalls (cafeteria为null或undefined)
-  sourceStalls.value.forEach(stall => {
-    // 检查stall是否有cafeteria关联
-    if (!stall.cafeteriaId && stall.latitude && stall.longitude) {
-      markers.push({
-        id: `stall-${stall.id}`,
-        lat: stall.latitude,
-        lng: stall.longitude,
-        label: stall.name,
-        type: 'stall'
-      })
-    }
-  })
+  // 添加不属于任何cafeteria的stalls (cafeteria为null或undefined) - with defensive check
+  if (Array.isArray(sourceStalls.value)) {
+    sourceStalls.value.forEach(stall => {
+      // 检查stall是否有cafeteria关联
+      if (!stall.cafeteriaId && stall.latitude && stall.longitude) {
+        markers.push({
+          id: `stall-${stall.id}`,
+          lat: stall.latitude,
+          lng: stall.longitude,
+          label: stall.name,
+          type: 'stall'
+        })
+      }
+    })
+  }
 
   return markers
 })
@@ -392,9 +403,12 @@ onMounted(async () => {
 const loadCafeterias = async () => {
   try {
     const response = await getCafeterias()
-    cafeterias.value = response.data || []
+    // Ensure response.data is an array
+    cafeterias.value = Array.isArray(response.data) ? response.data : []
+    console.log('Fetched cafeterias:', cafeterias.value.length)
   } catch (err) {
     console.error('Failed to load cafeterias:', err)
+    cafeterias.value = []
   }
 }
 
@@ -405,18 +419,29 @@ const getUserLocation = () => {
     return
   }
 
+  // Check if we're on a secure context (HTTPS or localhost)
+  if (!window.isSecureContext) {
+    console.warn('Geolocation requires a secure context (HTTPS or localhost). Using default location.')
+    // Set a default location (NUS coordinates) if not on secure context
+    userLocation.value = { lat: 1.2966, lng: 103.7764 }
+    return
+  }
+
   navigator.geolocation.getCurrentPosition(
     (position) => {
       const { latitude, longitude } = position.coords
       userLocation.value = { lat: latitude, lng: longitude }
+      console.log('User location obtained:', userLocation.value)
     },
     (error) => {
       console.warn('Error getting user location:', error.message)
+      // Set a default location (NUS coordinates) on error
+      userLocation.value = { lat: 1.2966, lng: 103.7764 }
     },
     {
-      enableHighAccuracy: true,
+      enableHighAccuracy: false, // Set to false for faster response
       timeout: 5000,
-      maximumAge: 0
+      maximumAge: 300000 // Cache position for 5 minutes
     }
   )
 }

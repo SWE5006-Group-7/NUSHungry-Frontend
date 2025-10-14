@@ -27,7 +27,7 @@
           name="comment"
           :rules="[
             { required: true, message: '请输入评价内容' },
-            { min: 10, message: '评价内容至少10个字符' },
+            { min: 1, message: '评价内容至少1个字符' },
             { max: 1000, message: '评价内容不能超过1000个字符' }
           ]"
         >
