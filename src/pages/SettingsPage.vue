@@ -2,6 +2,14 @@
   <div class="settings-container">
     <Header />
     <div class="settings-content">
+      <!-- 返回按钮 -->
+      <div class="back-button-container">
+        <a-button type="text" size="large" @click="goBack" class="back-btn">
+          <LeftOutlined />
+          <span>返回</span>
+        </a-button>
+      </div>
+
       <!-- 页面标题 -->
       <div class="page-header">
         <h1 class="page-title">
@@ -39,12 +47,12 @@
                 :show-upload-list="false"
                 accept="image/*"
               >
-                <a-button type="primary" size="large" :loading="uploadingAvatar">
+                <a-button type="primary" size="large">
                   <UploadOutlined />
                   选择头像
                 </a-button>
               </a-upload>
-              <p class="upload-tip">支持 JPG、PNG 格式，文件大小不超过 2MB</p>
+              <p class="upload-tip">支持 JPG、PNG 格式，文件大小不超过 10MB</p>
             </div>
           </div>
         </a-card>
@@ -194,6 +202,13 @@
         </a-card>
       </div>
     </div>
+
+    <!-- 头像裁剪对话框 -->
+    <AvatarCropper
+      v-model="showCropper"
+      :image-file="selectedFile"
+      @success="handleAvatarSuccess"
+    />
   </div>
 </template>
 
@@ -207,10 +222,12 @@ import {
   LockOutlined,
   LogoutOutlined,
   SettingOutlined,
-  UploadOutlined
+  UploadOutlined,
+  LeftOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import Header from '@/components/Header.vue'
+import AvatarCropper from '@/components/AvatarCropper.vue'
 import authService from '@/services/authService'
 import { getResourceUrl } from '@/utils/config'
 
@@ -220,8 +237,9 @@ const userStore = useUserStore()
 const activeTab = ref('profile')
 const loadingProfile = ref(false)
 const loadingPassword = ref(false)
-const uploadingAvatar = ref(false)
 const avatarPreview = ref(null)
+const showCropper = ref(false)
+const selectedFile = ref(null)
 
 // 个人信息表单
 const profileForm = reactive({
@@ -344,7 +362,7 @@ const handleLogout = () => {
 }
 
 // 头像上传前的处理
-const handleBeforeUpload = async (file) => {
+const handleBeforeUpload = (file) => {
   // 检查文件类型
   const isImage = file.type.startsWith('image/')
   if (!isImage) {
@@ -352,40 +370,36 @@ const handleBeforeUpload = async (file) => {
     return false
   }
 
-  // 检查文件大小 (2MB)
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isLt2M) {
-    message.error('图片大小不能超过 2MB!')
+  // 检查文件大小 (10MB)
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isLt10M) {
+    message.error('图片大小不能超过 10MB!')
     return false
   }
 
-  // 上传头像
-  try {
-    uploadingAvatar.value = true
-
-    // 创建预览
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      avatarPreview.value = e.target.result
-    }
-    reader.readAsDataURL(file)
-
-    // 上传到服务器
-    const avatarUrl = await authService.uploadAvatar(file)
-
-    // 更新用户store
-    userStore.user.avatarUrl = avatarUrl
-
-    message.success('头像上传成功!')
-  } catch (error) {
-    message.error('头像上传失败,请稍后重试')
-    console.error('Upload avatar error:', error)
-    avatarPreview.value = null
-  } finally {
-    uploadingAvatar.value = false
-  }
+  // 显示裁剪器
+  selectedFile.value = file
+  showCropper.value = true
 
   return false // 阻止自动上传
+}
+
+// 头像上传成功回调
+const handleAvatarSuccess = (newAvatarUrl) => {
+  // 更新预览
+  avatarPreview.value = getResourceUrl(newAvatarUrl)
+
+  // 更新用户store
+  if (userStore.user) {
+    userStore.user.avatarUrl = newAvatarUrl
+  }
+
+  message.success('头像更新成功!')
+}
+
+// 返回上一页
+const goBack = () => {
+  router.back()
 }
 
 onMounted(() => {
@@ -404,6 +418,28 @@ onMounted(() => {
   max-width: 900px;
   margin: 0 auto;
   padding: 32px 24px;
+}
+
+/* 返回按钮 */
+.back-button-container {
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  color: #374151;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+}
+
+.back-btn:hover {
+  background-color: #f3f4f6;
+  color: #111827;
 }
 
 /* 页面标题 */

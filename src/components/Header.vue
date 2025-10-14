@@ -5,12 +5,38 @@
       <a-typography-title :level="4" :style="brandTitle">NUSHungry</a-typography-title>
     </div>
 
-    <a-input-search
-      allow-clear
-      :style="searchStyle"
-      size="large"
-      placeholder="Search for canteens, stalls, or dishes..."
-    />
+    <a-dropdown
+      v-model:open="dropdownVisible"
+      :trigger="['focus']"
+      placement="bottomLeft"
+    >
+      <a-input-search
+        v-model:value="searchKeyword"
+        allow-clear
+        :style="searchStyle"
+        size="large"
+        placeholder="Search for canteens, stalls, or dishes..."
+        @search="handleSearch"
+        @clear="handleSearch"
+        @focus="onSearchFocus"
+        @blur="onSearchBlur"
+        @input="onSearchInput"
+      />
+      <template #overlay>
+        <a-menu v-if="searchOptions.length > 0" class="search-dropdown-menu">
+          <a-menu-item
+            v-for="(option, index) in searchOptions"
+            :key="index"
+            @click="onSelectKeyword(option.keyword)"
+          >
+            <div class="search-option">
+              <ClockCircleOutlined style="color: #8c8c8c; margin-right: 8px;" />
+              <span>{{ option.keyword }}</span>
+            </div>
+          </a-menu-item>
+        </a-menu>
+      </template>
+    </a-dropdown>
 
     <!-- 未登录状态 -->
     <div v-if="!userStore.isAuthenticated" class="auth-buttons">
@@ -45,6 +71,10 @@
             <SettingOutlined />
             设置
           </a-menu-item>
+          <a-menu-item v-if="userIsAdmin" key="dashboard" @click="goToDashboard">
+            <DashboardOutlined />
+            管理后台
+          </a-menu-item>
           <a-menu-divider />
           <a-menu-item key="logout" @click="handleLogout">
             <LogoutOutlined />
@@ -57,14 +87,26 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { UserOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons-vue'
+import { UserOutlined, SettingOutlined, LogoutOutlined, ClockCircleOutlined, DashboardOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getResourceUrl } from '@/utils/config'
+import searchService from '@/services/searchService'
+import { isAdmin } from '@/utils/role'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
+
+const searchKeyword = ref('')
+const searchOptions = ref([])
+const recentKeywords = ref([])
+const dropdownVisible = ref(false)
+
+// 检查当前用户是否是管理员
+const userIsAdmin = computed(() => isAdmin())
 
 const headerStyle = {
   background: '#ffffff',
@@ -90,6 +132,154 @@ const brandTitle = { margin: 0, marginLeft: '8px', color: '#111827', fontWeight:
 const searchStyle = { maxWidth: '720px', flex: 1, margin: '0 24px' }
 const signInBtn = { borderColor: '#111827', color: '#111827' }
 
+// 加载搜索历史
+const loadSearchSuggestions = async () => {
+  // 只加载已登录用户的搜索历史
+  if (!userStore.isAuthenticated) {
+    console.log('用户未登录，不加载搜索历史')
+    return
+  }
+
+  try {
+    // 加载用户搜索历史
+    const keywords = await searchService.getRecentKeywords(10)
+    recentKeywords.value = keywords
+    console.log('成功加载搜索历史:', keywords)
+  } catch (error) {
+    // 静默处理错误，不影响用户体验
+    console.error('无法加载搜索历史:', error)
+  }
+}
+
+// 搜索框聚焦时显示建议
+const onSearchFocus = () => {
+  updateSearchOptions(searchKeyword.value)
+  console.log('搜索框聚焦，searchOptions:', searchOptions.value)
+  console.log('recentKeywords:', recentKeywords.value)
+  if (searchOptions.value.length > 0) {
+    dropdownVisible.value = true
+    console.log('显示下拉框')
+  } else {
+    console.log('没有搜索选项，不显示下拉框')
+  }
+}
+
+// 搜索框失焦时延迟隐藏（给点击事件时间）
+const onSearchBlur = () => {
+  setTimeout(() => {
+    dropdownVisible.value = false
+  }, 200)
+}
+
+// 输入搜索关键词时的处理
+const onSearchInput = (e) => {
+  const value = e.target.value
+  updateSearchOptions(value)
+  dropdownVisible.value = searchOptions.value.length > 0
+}
+
+// 更新搜索选项
+const updateSearchOptions = (value) => {
+  console.log('>>> updateSearchOptions 被调用')
+  console.log('>>> 输入值:', value)
+  console.log('>>> recentKeywords:', recentKeywords.value)
+  console.log('>>> recentKeywords.length:', recentKeywords.value.length)
+
+  if (!value || value.trim() === '') {
+    // 显示所有历史搜索
+    searchOptions.value = recentKeywords.value.map(k => ({
+      value: k,
+      label: k,
+      keyword: k,
+      isHistory: true
+    }))
+  } else {
+    // 根据输入过滤历史搜索
+    searchOptions.value = recentKeywords.value
+      .filter(k => k.toLowerCase().includes(value.toLowerCase()))
+      .map(k => ({
+        value: k,
+        label: k,
+        keyword: k,
+        isHistory: true
+      }))
+  }
+
+  console.log('>>> 更新后的searchOptions:', searchOptions.value)
+  console.log('>>> searchOptions.length:', searchOptions.value.length)
+}
+
+// 选择关键词时的处理
+const onSelectKeyword = (value) => {
+  searchKeyword.value = value
+  dropdownVisible.value = false
+  handleSearch()
+}
+
+// 执行搜索
+const handleSearch = async () => {
+  const keyword = searchKeyword.value.trim()
+
+  dropdownVisible.value = false
+
+  // 跳转到首页，如果关键词为空则清除keyword参数
+  if (!keyword) {
+    // 清空搜索：移除keyword参数，保留其他查询参数
+    const { keyword: _, ...otherQuery } = route.query
+    router.push({
+      path: '/',
+      query: otherQuery
+    })
+  } else {
+    // 有关键词：添加keyword参数
+    router.push({
+      path: '/',
+      query: {
+        ...route.query,
+        keyword: keyword
+      }
+    })
+
+    // 调用搜索API以记录搜索历史（后台执行，不影响页面显示）
+    try {
+      console.log('调用搜索API记录搜索历史:', keyword)
+      await searchService.searchStalls({ keyword })
+      console.log('搜索API调用成功')
+      // 重新加载搜索历史以更新下拉建议
+      await loadSearchSuggestions()
+    } catch (error) {
+      console.error('调用搜索API失败:', error)
+      // 静默处理错误，不影响用户体验
+    }
+  }
+}
+
+// 监听路由变化，从URL参数中恢复搜索关键词
+watch(() => route.query.keyword, (newKeyword) => {
+  if (newKeyword) {
+    searchKeyword.value = newKeyword
+  }
+}, { immediate: true })
+
+// 监听用户登录状态变化
+watch(() => userStore.isAuthenticated, (isAuth) => {
+  if (isAuth) {
+    loadSearchSuggestions()
+  } else {
+    recentKeywords.value = []
+    searchOptions.value = []
+  }
+})
+
+onMounted(() => {
+  loadSearchSuggestions()
+
+  // 从URL参数中恢复搜索关键词
+  if (route.query.keyword) {
+    searchKeyword.value = route.query.keyword
+  }
+})
+
 const goToHome = () => {
   router.push('/')
 }
@@ -110,6 +300,10 @@ const goToProfile = () => {
 
 const goToSettings = () => {
   router.push('/settings')
+}
+
+const goToDashboard = () => {
+  router.push('/admin/dashboard')
 }
 
 const handleLogout = () => {
@@ -142,5 +336,31 @@ const handleLogout = () => {
 .username {
   font-weight: 500;
   color: #111827;
+}
+
+.search-option {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.search-option span {
+  color: #333;
+}
+
+:deep(.search-dropdown-menu) {
+  min-width: 300px;
+  max-width: 720px;
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+:deep(.search-dropdown-menu .ant-menu-item) {
+  padding: 8px 16px;
+}
+
+:deep(.search-dropdown-menu .ant-menu-item:hover) {
+  background-color: #f5f5f5;
 }
 </style>

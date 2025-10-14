@@ -1,7 +1,7 @@
 <template>
   <div :style="wrapperStyle">
     <div ref="mapEl" class="leaflet-host" :style="{ height, borderRadius: '20px' }"></div>
-    <button v-if="userLocation" @click="returnToUserLocation" class="location-btn" title="Return to my location">
+    <button @click="returnToUserLocation" class="location-btn" :class="{ 'disabled': !userLocation }" :title="userLocation ? 'Return to my location' : 'Getting your location...'">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <circle cx="12" cy="12" r="3"/>
@@ -16,13 +16,13 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 const props = defineProps({
-  markers: { type: Array, default: () => [] }, // {id,lat,lng,label}
+  markers: { type: Array, default: () => [] }, // {id,lat,lng,label,type}
   height: { type: String, default: '320px' },
   focusId: { type: [String, Number, null], default: null },
   routeOnClick: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['marker-click'])
+const emit = defineEmits(['marker-click', 'bounds-changed'])
 
 const mapEl = ref(null)
 const userLocation = ref(null)
@@ -42,6 +42,17 @@ onMounted(() => {
   layerGroup = L.layerGroup().addTo(map)
   renderMarkers()
   getUserLocation()
+
+  // Listen for map move/zoom events to emit bounds changes
+  map.on('moveend', () => {
+    const bounds = map.getBounds()
+    emit('bounds-changed', {
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest()
+    })
+  })
 })
 
 onBeforeUnmount(() => {
@@ -49,11 +60,18 @@ onBeforeUnmount(() => {
 })
 
 watch(() => props.markers, renderMarkers, { deep: true })
-watch(() => props.focusId, (id) => {
-  if (!id || !markerById.has(id)) return
-  const m = markerById.get(id)
-  map.setView(m.getLatLng(), Math.max(map.getZoom(), 16), { animate: true })
-  m.openPopup()
+watch(() => props.focusId, (id, oldId) => {
+  // 关闭之前聚焦的marker的tooltip
+  if (oldId && markerById.has(oldId)) {
+    const oldMarker = markerById.get(oldId)
+    oldMarker.closeTooltip()
+  }
+
+  // 打开新聚焦的marker的tooltip
+  if (id && markerById.has(id)) {
+    const m = markerById.get(id)
+    m.openTooltip()
+  }
 })
 
 function renderMarkers() {
@@ -63,8 +81,35 @@ function renderMarkers() {
 
   const bounds = []
   props.markers.forEach((m) => {
-    const marker = L.marker([m.lat, m.lng])
-      .bindTooltip(m.label)
+    // 根据type创建不同样式的图标
+    let markerIcon
+    if (m.type === 'cafeteria') {
+      // Cafeteria: 蓝色建筑图标
+      markerIcon = L.divIcon({
+        className: 'cafeteria-marker',
+        html: `<div class="marker-icon cafeteria-icon">🏢</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32]
+      })
+    } else if (m.type === 'stall') {
+      // Stall: 橙色餐厅图标
+      markerIcon = L.divIcon({
+        className: 'stall-marker',
+        html: `<div class="marker-icon stall-icon">🍽️</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 28]
+      })
+    } else {
+      // 默认标记(向后兼容)
+      markerIcon = undefined
+    }
+
+    const marker = L.marker([m.lat, m.lng], markerIcon ? { icon: markerIcon } : {})
+      .bindTooltip(m.label, {
+        permanent: false,  // 不持久显示,只在hover或openTooltip时显示
+        direction: 'top',   // 显示在标记上方
+        offset: [0, -10]    // 向上偏移10px
+      })
       .on('click', () => { if (props.routeOnClick) emit('marker-click', m) })
     marker.addTo(layerGroup)
     markerById.set(m.id ?? m.label, marker)
@@ -122,13 +167,13 @@ function returnToUserLocation() {
 }
 
 const wrapperStyle = {
+  position: 'relative',
   background: 'white',
   borderRadius: '20px',
   padding: '8px',
   boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
   border: '1px solid rgba(0,0,0,0.03)',
-  /* Avoid creating a new stacking context here (no transform) */
-  transform: undefined
+  transition: 'all 0.3s ease'
 }
 </script>
 
@@ -146,6 +191,8 @@ const wrapperStyle = {
   z-index: 0;
 }
 
+
+
 .location-btn {
   position: absolute;
   bottom: 24px;
@@ -161,7 +208,8 @@ const wrapperStyle = {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  z-index: 1000;
+  z-index: 1001;
+  color: #64748b;
 }
 
 .location-btn:hover {
@@ -173,6 +221,18 @@ const wrapperStyle = {
 
 .location-btn:active {
   transform: scale(0.95);
+}
+
+.location-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.location-btn.disabled:hover {
+  background: white;
+  color: #64748b;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 :deep(.user-location-marker) {
@@ -200,5 +260,40 @@ const wrapperStyle = {
   100% {
     box-shadow: 0 0 0 0 rgba(66, 133, 244, 0);
   }
+}
+
+/* Custom marker styles */
+:deep(.cafeteria-marker),
+:deep(.stall-marker) {
+  background: transparent;
+  border: none;
+}
+
+:deep(.marker-icon) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 20px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+:deep(.cafeteria-icon) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 3px solid white;
+}
+
+:deep(.stall-icon) {
+  background: linear-gradient(135deg, #f7931e 0%, #ff6b6b 100%);
+  border: 3px solid white;
+}
+
+:deep(.marker-icon:hover) {
+  transform: scale(1.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 </style>

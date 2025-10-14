@@ -2,13 +2,22 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/pages/HomePage.vue'
 import CafeteriaDetail from '@/pages/CafeteriaDetail.vue'
 import StallDetail from '@/pages/StallDetail.vue'
+import AllReviewsPage from '@/pages/AllReviewsPage.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
+import ForgotPassword from '@/pages/ForgotPassword.vue'
 import ProfilePage from '@/pages/ProfilePage.vue'
+import FavoritesPage from '@/pages/FavoritesPage.vue'
+import MyReviewsPage from '@/pages/MyReviewsPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 import AdminLogin from '@/views/admin/AdminLogin.vue'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 import UserManagement from '@/views/admin/UserManagement.vue'
+import CafeteriaManagement from '@/views/admin/CafeteriaManagement.vue'
+import StallManagement from '@/views/admin/StallManagement.vue'
+import ContentModeration from '@/views/admin/ContentModeration.vue'
+import ReviewManagement from '@/views/admin/ReviewManagement.vue'
+import ImageManagement from '@/views/admin/ImageManagement.vue'
 import ChangePassword from '@/views/admin/ChangePassword.vue'
 import TokenDebug from '@/views/admin/TokenDebug.vue'
 import authService from '@/services/authService'
@@ -31,6 +40,11 @@ const routes = [
     component: StallDetail
   },
   {
+    path: '/stalls/:stallId/reviews',
+    name: 'AllReviews',
+    component: AllReviewsPage
+  },
+  {
     path: '/login',
     name: 'Login',
     component: LoginPage,
@@ -43,9 +57,27 @@ const routes = [
     meta: { requiresGuest: true }
   },
   {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword,
+    meta: { requiresGuest: true }
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: ProfilePage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/favorites',
+    name: 'Favorites',
+    component: FavoritesPage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/my-reviews',
+    name: 'MyReviews',
+    component: MyReviewsPage,
     meta: { requiresAuth: true }
   },
   {
@@ -75,6 +107,36 @@ const routes = [
     path: '/admin/users',
     name: 'UserManagement',
     component: UserManagement,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/cafeterias',
+    name: 'CafeteriaManagement',
+    component: CafeteriaManagement,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/stalls',
+    name: 'StallManagement',
+    component: StallManagement,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/moderation',
+    name: 'ContentModeration',
+    component: ContentModeration,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/reviews',
+    name: 'ReviewManagement',
+    component: ReviewManagement,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/images',
+    name: 'ImageManagement',
+    component: ImageManagement,
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {

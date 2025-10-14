@@ -2,20 +2,34 @@
   <div class="profile-container">
     <Header />
     <div class="profile-content">
+      <!-- 返回按钮 -->
+      <div class="back-button-container">
+        <a-button type="text" size="large" @click="goBack" class="back-btn">
+          <LeftOutlined />
+          <span>返回</span>
+        </a-button>
+      </div>
+
       <!-- 页面标题 -->
       <div class="page-header">
         <div class="header-content">
           <div class="user-info">
-            <a-avatar :size="64" class="user-avatar">
-              <template #icon><UserOutlined /></template>
-            </a-avatar>
+            <div class="avatar-container">
+              <a-avatar :size="64" class="user-avatar" :src="avatarUrl">
+                <template #icon><UserOutlined /></template>
+              </a-avatar>
+            </div>
             <div class="user-details">
               <h1 class="user-name">{{ userStore.username || '用户' }}</h1>
               <p class="user-email">{{ userStore.user?.email || '' }}</p>
             </div>
+            <a-button type="primary" @click="goToSettings" class="settings-btn">
+              去设置
+            </a-button>
           </div>
         </div>
       </div>
+
 
       <!-- 内容区域容器 -->
       <div class="content-grid">
@@ -23,15 +37,24 @@
         <div class="content-section">
           <div class="section-header">
             <div class="section-icon-box reviews-icon">
-              <StarOutlined class="section-icon" />
+              <CommentOutlined class="section-icon" />
             </div>
             <h2 class="section-title">我的评价</h2>
+            <a-button
+              v-if="reviews.length > 0"
+              type="link"
+              @click="$router.push('/my-reviews')"
+              class="view-all-btn"
+            >
+              查看全部
+              <RightOutlined />
+            </a-button>
           </div>
           <a-spin :spinning="loadingReviews">
             <div v-if="reviews.length === 0" class="empty-state">
               <a-empty description="暂无评价">
                 <template #image>
-                  <StarOutlined style="font-size: 48px; color: #d9d9d9;" />
+                  <CommentOutlined style="font-size: 48px; color: #d9d9d9;" />
                 </template>
               </a-empty>
             </div>
@@ -74,15 +97,24 @@
         <div class="content-section">
           <div class="section-header">
             <div class="section-icon-box favorites-icon">
-              <HeartOutlined class="section-icon" />
+              <StarOutlined class="section-icon" />
             </div>
             <h2 class="section-title">我的收藏</h2>
+            <a-button
+              v-if="favorites.length > 0"
+              type="link"
+              @click="$router.push('/favorites')"
+              class="view-all-btn"
+            >
+              查看全部
+              <RightOutlined />
+            </a-button>
           </div>
           <a-spin :spinning="loadingFavorites">
             <div v-if="favorites.length === 0" class="empty-state">
               <a-empty description="暂无收藏">
                 <template #image>
-                  <HeartOutlined style="font-size: 48px; color: #d9d9d9;" />
+                  <StarOutlined style="font-size: 48px; color: #d9d9d9;" />
                 </template>
               </a-empty>
             </div>
@@ -102,24 +134,19 @@
                   <div v-else class="placeholder-image">
                     <ShopOutlined />
                   </div>
+                  <!-- 收藏按钮 -->
+                  <a-button
+                    type="text"
+                    size="small"
+                    @click.stop="handleRemoveFavorite(favorite.id)"
+                    class="favorite-star-overlay"
+                  >
+                    <StarFilled />
+                  </a-button>
                 </div>
                 <div class="favorite-content">
-                  <div class="favorite-header">
-                    <h3 class="favorite-name">{{ favorite.stallName }}</h3>
-                    <HeartFilled class="favorite-icon" />
-                  </div>
+                  <h3 class="favorite-name">{{ favorite.stallName }}</h3>
                   <p class="favorite-location">{{ favorite.cafeteriaName }}</p>
-                  <div class="favorite-actions">
-                    <a-button
-                      type="text"
-                      danger
-                      size="small"
-                      @click.stop="handleRemoveFavorite(favorite.id)"
-                      class="remove-btn"
-                    >
-                      取消收藏
-                    </a-button>
-                  </div>
                 </div>
               </div>
             </div>
@@ -133,18 +160,21 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import {
   UserOutlined,
-  HeartFilled,
-  HeartOutlined,
   ShopOutlined,
   ClockCircleOutlined,
   StarOutlined,
-  DeleteOutlined
+  StarFilled,
+  DeleteOutlined,
+  RightOutlined,
+  CommentOutlined,
+  LeftOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import authService from '@/services/authService'
+import { favoriteService } from '@/services/favoriteService'
 import Header from '@/components/Header.vue'
 
 const router = useRouter()
@@ -154,6 +184,7 @@ const reviews = ref([])
 const favorites = ref([])
 const loadingReviews = ref(false)
 const loadingFavorites = ref(false)
+const avatarUrl = ref('')
 
 // 加载用户评价
 const loadReviews = async () => {
@@ -173,8 +204,19 @@ const loadReviews = async () => {
 const loadFavorites = async () => {
   try {
     loadingFavorites.value = true
-    const data = await authService.getUserFavorites()
-    favorites.value = data
+    const userId = userStore.user?.id
+    if (!userId) return
+
+    // 使用详细版本API获取收藏列表
+    const data = await favoriteService.getUserFavoritesDetailed(userId.toString())
+    // 只显示前4个
+    favorites.value = data.slice(0, 4).map(fav => ({
+      id: fav.favoriteId,
+      stallId: fav.stallId,
+      stallName: fav.stallName,
+      stallImage: fav.stallImage,
+      cafeteriaName: fav.cafeteriaName
+    }))
   } catch (error) {
     message.error('加载收藏失败')
     console.error('Load favorites error:', error)
@@ -191,8 +233,26 @@ const handleDeleteReview = async (reviewId) => {
 
 // 取消收藏
 const handleRemoveFavorite = async (favoriteId) => {
-  // TODO: 实现取消收藏的API
-  message.warning('取消收藏功能待实现')
+  Modal.confirm({
+    title: '确认取消收藏',
+    content: '确定要取消收藏这个摊位吗?',
+    okText: '确认',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        const userId = userStore.user?.id
+        if (!userId) return
+
+        await favoriteService.removeFavoriteById(userId.toString(), favoriteId)
+        message.success('已取消收藏')
+        await loadFavorites()
+      } catch (error) {
+        message.error('操作失败')
+        console.error('Remove favorite error:', error)
+      }
+    }
+  })
 }
 
 // 跳转到stall详情
@@ -211,7 +271,22 @@ const formatDate = (dateString) => {
   })
 }
 
+// 跳转到设置页面
+const goToSettings = () => {
+  router.push('/settings')
+}
+
+// 返回上一页
+const goBack = () => {
+  router.back()
+}
+
 onMounted(() => {
+  // 初始化头像URL
+  avatarUrl.value = userStore.user?.avatarUrl
+    ? 'http://localhost:8080' + userStore.user.avatarUrl
+    : ''
+
   loadReviews()
   loadFavorites()
 })
@@ -228,6 +303,28 @@ onMounted(() => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 32px 24px;
+}
+
+/* 返回按钮 */
+.back-button-container {
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  color: #374151;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+}
+
+.back-btn:hover {
+  background-color: #f3f4f6;
+  color: #111827;
 }
 
 /* 页面标题 */
@@ -247,6 +344,20 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 20px;
+}
+
+.avatar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.change-avatar-btn {
+  font-size: 12px;
+  padding: 0;
+  height: auto;
+  color: #1890ff;
 }
 
 .user-avatar {
@@ -296,6 +407,14 @@ onMounted(() => {
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 2px solid #f3f4f6;
+  position: relative;
+}
+
+.view-all-btn {
+  margin-left: auto;
+  color: #1890ff;
+  font-weight: 500;
+  padding-right: 0;
 }
 
 .section-icon-box {
@@ -309,11 +428,11 @@ onMounted(() => {
 }
 
 .section-icon-box.reviews-icon {
-  background-color: #fef3c7;
+  background-color: #dbeafe;
 }
 
 .section-icon-box.favorites-icon {
-  background-color: #fee2e2;
+  background-color: #fef3c7;
 }
 
 .section-icon {
@@ -321,11 +440,11 @@ onMounted(() => {
 }
 
 .reviews-icon .section-icon {
-  color: #d97706;
+  color: #2563eb;
 }
 
 .favorites-icon .section-icon {
-  color: #dc2626;
+  color: #d97706;
 }
 
 .section-title {
@@ -451,6 +570,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   background-color: #f3f4f6;
+  position: relative;
 }
 
 .favorite-image img {
@@ -474,51 +594,52 @@ onMounted(() => {
   color: #d1d5db;
 }
 
-.favorite-content {
-  padding: 16px;
+/* 收藏按钮悬浮在图片右下角 */
+.favorite-star-overlay {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fadb14;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+  padding: 0;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
 }
 
-.favorite-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  margin-bottom: 8px;
+.favorite-star-overlay:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(250, 219, 20, 0.4);
+  background: rgba(255, 255, 255, 1);
+}
+
+.favorite-star-overlay:active {
+  transform: scale(0.95);
+}
+
+.favorite-content {
+  padding: 16px;
 }
 
 .favorite-name {
   font-size: 16px;
   font-weight: 600;
   color: #111827;
-  margin: 0;
-  flex: 1;
-}
-
-.favorite-icon {
-  color: #dc2626;
-  font-size: 18px;
-  flex-shrink: 0;
+  margin: 0 0 8px 0;
 }
 
 .favorite-location {
   font-size: 14px;
   color: #6b7280;
-  margin: 0 0 12px 0;
-}
-
-.favorite-actions {
-  padding-top: 12px;
-  border-top: 1px solid #f3f4f6;
-  text-align: center;
-}
-
-.remove-btn {
-  color: #dc2626;
-  font-weight: 500;
-  font-size: 13px;
-}
-
-.remove-btn:hover {
-  background-color: #fee2e2;
+  margin: 0;
 }
 
 /* 响应式设计 */

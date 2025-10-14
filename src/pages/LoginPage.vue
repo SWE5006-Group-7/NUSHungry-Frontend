@@ -29,6 +29,9 @@
               <LockOutlined />
             </template>
           </a-input-password>
+          <div style="text-align: right; margin-top: 8px;">
+            <a @click="goToForgotPassword" style="font-size: 14px;">忘记密码?</a>
+          </div>
         </a-form-item>
 
         <a-form-item>
@@ -107,6 +110,10 @@ const handleLogin = async () => {
 
 const goToRegister = () => {
   router.push('/register')
+}
+
+const goToForgotPassword = () => {
+  router.push('/forgot-password')
 }
 </script>
 

@@ -1,57 +1,22 @@
-import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
-
-// 创建axios实例
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-})
-
-// 请求拦截器 - 自动添加token
-apiClient.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  error => {
-    return Promise.reject(error)
-  }
-)
-
-// 响应拦截器 - 处理token过期
-apiClient.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response && error.response.status === 401) {
-      // Token过期或无效,清除本地存储并重定向到登录页
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
-  }
-)
+import apiClient from '@/utils/request'
 
 export default {
   // 用户注册
   async register(userData) {
     try {
       const response = await apiClient.post('/auth/register', userData)
-      const { token, id, username, email, avatarUrl } = response.data
+      const { token, refreshToken, id, username, email, avatarUrl, role } = response.data
 
-      // 构建user对象
-      const user = { id, username, email, avatarUrl }
+      // 构建user对象（包含role）
+      const user = { id, username, email, avatarUrl, role }
 
-      // 保存token和用户信息
+      // 保存token、refresh token和用户信息
       if (token) {
         localStorage.setItem('token', token)
         localStorage.setItem('user', JSON.stringify(user))
+      }
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken)
       }
 
       return { token, user }
@@ -64,15 +29,18 @@ export default {
   async login(credentials) {
     try {
       const response = await apiClient.post('/auth/login', credentials)
-      const { token, id, username, email, avatarUrl } = response.data
+      const { token, refreshToken, id, username, email, avatarUrl, role } = response.data
 
-      // 构建user对象
-      const user = { id, username, email, avatarUrl }
+      // 构建user对象（包含role）
+      const user = { id, username, email, avatarUrl, role }
 
-      // 保存token和用户信息
+      // 保存token、refresh token和用户信息
       if (token) {
         localStorage.setItem('token', token)
         localStorage.setItem('user', JSON.stringify(user))
+      }
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken)
       }
 
       return { token, user }
@@ -82,10 +50,22 @@ export default {
   },
 
   // 用户登出
-  logout() {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('userInfo')  // 同时清除管理员登录的信息
+  async logout() {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken')
+      if (refreshToken) {
+        // 调用后端撤销refresh token
+        await apiClient.post('/auth/logout', { refreshToken })
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // 无论是否成功,都清除本地存储
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+      localStorage.removeItem('userInfo')  // 同时清除管理员登录的信息
+    }
   },
 
   // 获取当前用户信息

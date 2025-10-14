@@ -23,6 +23,18 @@ const adminDashboardApi = {
       url: '/admin/dashboard/stats/system',
       method: 'get'
     });
+  },
+
+  // 获取用户增长数据(按日期范围)
+  getUserGrowth(startDate, endDate) {
+    return request({
+      url: '/admin/dashboard/user-growth',
+      method: 'get',
+      params: {
+        startDate,
+        endDate
+      }
+    });
   }
 };
 
