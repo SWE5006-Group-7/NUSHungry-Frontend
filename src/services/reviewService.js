@@ -125,7 +125,7 @@ const reviewService = {
       return response.data;
     } catch (error) {
       console.error('点赞操作失败:', error);
-      throw error.response?.data || error.message;
+      throw error;
     }
   },
 

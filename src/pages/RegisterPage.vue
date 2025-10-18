@@ -1,16 +1,16 @@
 <template>
   <div class="register-container">
-    <a-card class="register-card" title="注册 NUSHungry">
+    <a-card class="register-card" :title="$t('auth.registerTitle')">
       <a-form
         :model="formState"
         :rules="rules"
         @finish="handleRegister"
         layout="vertical"
       >
-        <a-form-item label="用户名" name="username">
+        <a-form-item :label="$t('auth.username')" name="username">
           <a-input
             v-model:value="formState.username"
-            placeholder="请输入用户名"
+            :placeholder="$t('auth.usernamePlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -19,10 +19,10 @@
           </a-input>
         </a-form-item>
 
-        <a-form-item label="邮箱" name="email">
+        <a-form-item :label="$t('auth.email')" name="email">
           <a-input
             v-model:value="formState.email"
-            placeholder="请输入邮箱"
+            :placeholder="$t('auth.emailPlaceholder')"
             size="large"
             type="email"
           >
@@ -32,10 +32,10 @@
           </a-input>
         </a-form-item>
 
-        <a-form-item label="密码" name="password">
+        <a-form-item :label="$t('auth.password')" name="password">
           <a-input-password
             v-model:value="formState.password"
-            placeholder="请输入密码 (至少6个字符)"
+            :placeholder="$t('auth.passwordPlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -44,10 +44,10 @@
           </a-input-password>
         </a-form-item>
 
-        <a-form-item label="确认密码" name="confirmPassword">
+        <a-form-item :label="$t('auth.confirmPassword')" name="confirmPassword">
           <a-input-password
             v-model:value="formState.confirmPassword"
-            placeholder="请再次输入密码"
+            :placeholder="$t('auth.confirmPasswordPlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -64,14 +64,14 @@
             block
             :loading="loading"
           >
-            注册
+            {{ $t('common.register') }}
           </a-button>
         </a-form-item>
 
         <a-form-item>
           <div class="register-footer">
-            <span>已有账号?</span>
-            <a @click="goToLogin">立即登录</a>
+            <span>{{ $t('auth.hasAccount') }}</span>
+            <a @click="goToLogin">{{ $t('auth.loginNow') }}</a>
           </div>
         </a-form-item>
       </a-form>
@@ -80,8 +80,9 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
@@ -89,6 +90,7 @@ import { useUserStore } from '@/stores/user'
 const router = useRouter()
 const userStore = useUserStore()
 const loading = ref(false)
+const { t } = useI18n()
 
 const formState = reactive({
   username: '',
@@ -99,9 +101,9 @@ const formState = reactive({
 
 const validatePassword = (rule, value) => {
   if (value === '') {
-    return Promise.reject('请输入密码')
+    return Promise.reject(t('auth.passwordRequired'))
   } else if (value.length < 6) {
-    return Promise.reject('密码至少6个字符')
+    return Promise.reject(t('auth.passwordMinLength'))
   } else {
     return Promise.resolve()
   }
@@ -109,23 +111,23 @@ const validatePassword = (rule, value) => {
 
 const validateConfirmPassword = (rule, value) => {
   if (value === '') {
-    return Promise.reject('请确认密码')
+    return Promise.reject(t('auth.confirmPasswordRequired'))
   } else if (value !== formState.password) {
-    return Promise.reject('两次输入的密码不一致')
+    return Promise.reject(t('auth.passwordNotMatch'))
   } else {
     return Promise.resolve()
   }
 }
 
-const rules = {
+const rules = computed(() => ({
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, message: '用户名至少3个字符', trigger: 'blur' },
-    { max: 20, message: '用户名最多20个字符', trigger: 'blur' }
+    { required: true, message: t('auth.usernameRequired'), trigger: 'blur' },
+    { min: 3, message: t('auth.usernameMinLength'), trigger: 'blur' },
+    { max: 20, message: t('validation.tooLong'), trigger: 'blur' }
   ],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+    { required: true, message: t('auth.emailRequired'), trigger: 'blur' },
+    { type: 'email', message: t('auth.emailInvalid'), trigger: 'blur' }
   ],
   password: [
     { required: true, validator: validatePassword, trigger: 'blur' }
@@ -133,7 +135,7 @@ const rules = {
   confirmPassword: [
     { required: true, validator: validateConfirmPassword, trigger: 'blur' }
   ]
-}
+}))
 
 const handleRegister = async () => {
   try {
@@ -145,14 +147,14 @@ const handleRegister = async () => {
     })
 
     if (result.success) {
-      message.success('注册成功!')
+      message.success(t('auth.registerSuccess'))
       // 跳转到首页
       router.push('/')
     } else {
-      message.error(result.message || '注册失败')
+      message.error(result.message || t('auth.registerFailed'))
     }
   } catch (error) {
-    message.error('注册失败,请稍后重试')
+    message.error(t('auth.registerFailed'))
     console.error('Register error:', error)
   } finally {
     loading.value = false

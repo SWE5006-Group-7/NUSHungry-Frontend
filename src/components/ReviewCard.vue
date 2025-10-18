@@ -15,7 +15,7 @@
           </a-typography-text>
           <a-typography-text type="secondary" class="date">
             {{ formatDate(review.createdAt) }}
-            <span v-if="review.updatedAt && review.updatedAt !== review.createdAt"> (已编辑)</span>
+            <span v-if="review.updatedAt && review.updatedAt !== review.createdAt"> ({{ $t('profile.edited') }})</span>
           </a-typography-text>
         </div>
       </div>
@@ -45,14 +45,14 @@
         @click="isExpanded = true"
         class="expand-link"
       >
-        展开
+        {{ $t('review.expand') }}
       </a>
       <a
         v-if="isExpanded && needsExpansion"
         @click="isExpanded = false"
         class="expand-link"
       >
-        收起
+        {{ $t('review.collapse') }}
       </a>
     </a-typography-paragraph>
 
@@ -81,7 +81,7 @@
               <LikeFilled v-if="localLiked" style="color: #1890ff;" />
               <LikeOutlined v-else />
             </template>
-            {{ localLikesCount > 0 ? localLikesCount : '点赞' }}
+            {{ localLikesCount > 0 ? localLikesCount : $t('review.like') }}
           </a-button>
 
           <!-- 举报按钮 -->
@@ -93,7 +93,7 @@
             class="action-btn report-btn"
           >
             <template #icon><FlagOutlined /></template>
-            举报
+            {{ $t('review.report') }}
           </a-button>
         </a-space>
       </div>
@@ -107,7 +107,7 @@
             @click="handleEdit"
           >
             <template #icon><EditOutlined /></template>
-            编辑
+            {{ $t('common.edit') }}
           </a-button>
           <a-button
             v-if="review.canDelete"
@@ -117,7 +117,7 @@
             @click="handleDelete"
           >
             <template #icon><DeleteOutlined /></template>
-            删除
+            {{ $t('common.delete') }}
           </a-button>
         </a-space>
       </div>
@@ -126,29 +126,29 @@
     <!-- 举报对话框 -->
     <a-modal
       v-model:open="reportVisible"
-      title="举报评价"
+      :title="$t('review.reportTitle')"
       @ok="submitReport"
       @cancel="cancelReport"
       :confirm-loading="reporting"
-      okText="提交举报"
-      cancelText="取消"
+      :okText="$t('review.submitReport')"
+      :cancelText="$t('common.cancel')"
     >
       <a-form layout="vertical">
-        <a-form-item label="举报原因" required>
+        <a-form-item :label="$t('review.reportReason')" required>
           <a-select
             v-model:value="reportReason"
-            placeholder="请选择举报原因"
+            :placeholder="$t('review.reportReasonPlaceholder')"
             :options="reportReasons"
           />
         </a-form-item>
 
         <a-form-item
-          label="详细描述"
+          :label="$t('review.reportDescription')"
           :required="reportReason === 'OTHER'"
         >
           <a-textarea
             v-model:value="reportDescription"
-            placeholder="请详细描述举报原因（选填）"
+            :placeholder="$t('review.reportDescriptionPlaceholder')"
             :rows="4"
             :maxlength="500"
             show-count
@@ -163,6 +163,7 @@
 import { ref, computed } from 'vue';
 import { EditOutlined, DeleteOutlined, LikeOutlined, LikeFilled, FlagOutlined } from '@ant-design/icons-vue';
 import { Modal, message } from 'ant-design-vue';
+import { useI18n } from 'vue-i18n';
 import ImageGallery from './ImageGallery.vue';
 import reviewService from '../services/reviewService';
 import { useUserStore } from '../stores/user';
@@ -183,6 +184,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['edit', 'delete', 'update']);
+const { t } = useI18n();
 
 const userStore = useUserStore();
 const isExpanded = ref(false);
@@ -200,15 +202,15 @@ const reportDescription = ref('');
 const reporting = ref(false);
 
 // 举报原因选项
-const reportReasons = [
-  { value: 'SPAM', label: '垃圾信息' },
-  { value: 'OFFENSIVE', label: '侮辱谩骂' },
-  { value: 'INAPPROPRIATE', label: '不当内容' },
-  { value: 'FALSE_INFO', label: '虚假信息' },
-  { value: 'OFF_TOPIC', label: '与摊位无关' },
-  { value: 'DUPLICATE', label: '重复评价' },
-  { value: 'OTHER', label: '其他原因' }
-];
+const reportReasons = computed(() => [
+  { value: 'SPAM', label: t('review.reportReasons.SPAM') },
+  { value: 'OFFENSIVE', label: t('review.reportReasons.OFFENSIVE') },
+  { value: 'INAPPROPRIATE', label: t('review.reportReasons.INAPPROPRIATE') },
+  { value: 'FALSE_INFO', label: t('review.reportReasons.FALSE_INFO') },
+  { value: 'OFF_TOPIC', label: t('review.reportReasons.OFF_TOPIC') },
+  { value: 'DUPLICATE', label: t('review.reportReasons.DUPLICATE') },
+  { value: 'OTHER', label: t('review.reportReasons.OTHER') }
+]);
 
 const needsExpansion = computed(() => {
   return props.review.comment && props.review.comment.length > MAX_LENGTH;
@@ -228,19 +230,19 @@ const formatDate = (dateString) => {
 
   // 小于1分钟
   if (diff < 60000) {
-    return '刚刚';
+    return t('time.justNow');
   }
   // 小于1小时
   if (diff < 3600000) {
-    return `${Math.floor(diff / 60000)}分钟前`;
+    return t('time.minutesAgo', { n: Math.floor(diff / 60000) });
   }
   // 小于24小时
   if (diff < 86400000) {
-    return `${Math.floor(diff / 3600000)}小时前`;
+    return t('time.hoursAgo', { n: Math.floor(diff / 3600000) });
   }
   // 小于7天
   if (diff < 604800000) {
-    return `${Math.floor(diff / 86400000)}天前`;
+    return t('time.daysAgo', { n: Math.floor(diff / 86400000) });
   }
 
   // 超过7天显示具体日期
@@ -257,22 +259,22 @@ const handleEdit = () => {
 
 const handleDelete = () => {
   Modal.confirm({
-    title: '确认删除',
-    content: '确定要删除这条评价吗？此操作不可恢复。',
-    okText: '确认',
-    cancelText: '取消',
+    title: t('review.confirmDeleteTitle'),
+    content: t('review.confirmDeleteContent'),
+    okText: t('common.confirm'),
+    cancelText: t('common.cancel'),
     onOk: async () => {
       try {
         const response = await reviewService.deleteReview(props.review.id);
         if (response.success) {
-          message.success('评价已删除');
+          message.success(t('review.deleteSuccess'));
           emit('delete', props.review.id);
         } else {
-          message.error(response.message || '删除失败');
+          message.error(response.message || t('review.deleteFailed'));
         }
       } catch (error) {
-        console.error('删除评价失败:', error);
-        message.error('删除失败，请稍后重试');
+        console.error('Delete review error:', error);
+        message.error(t('review.deleteFailed'));
       }
     }
   });
@@ -280,7 +282,7 @@ const handleDelete = () => {
 
 const handleLike = async () => {
   if (!userStore.isAuthenticated) {
-    message.warning('请先登录');
+    message.warning(t('review.pleaseLogin'));
     return;
   }
 
@@ -296,25 +298,14 @@ const handleLike = async () => {
         : Math.max(0, localLikesCount.value - 1);
       emit('update');
     } else {
-      message.error(response.message || '操作失败');
+      message.error(response.message || t('messages.operationFailed'));
     }
   } catch (error) {
-    console.error('点赞操作失败:', error);
-    console.error('Error response:', error.response);
-    if (error.message === '请先登录') {
-      message.warning('请先登录');
-    } else if (error.response && error.response.status === 403) {
-      message.error('登录已过期，请重新登录');
-      // 清除过期token
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      userStore.logout();
-      // 重定向到登录页
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 1500);
-    } else {
-      message.error('操作失败，请稍后重试');
+    console.error('Like operation error:', error);
+    // 401/403认证错误由request拦截器统一处理，这里不重复提示
+    const status = error.response?.status;
+    if (status !== 401 && status !== 403) {
+      message.error(error.response?.data?.message || t('messages.operationFailed'));
     }
   } finally {
     liking.value = false;
@@ -323,7 +314,7 @@ const handleLike = async () => {
 
 const handleReport = () => {
   if (!userStore.isAuthenticated) {
-    message.warning('请先登录');
+    message.warning(t('review.pleaseLogin'));
     return;
   }
   reportVisible.value = true;
@@ -331,12 +322,12 @@ const handleReport = () => {
 
 const submitReport = async () => {
   if (!reportReason.value) {
-    message.warning('请选择举报原因');
+    message.warning(t('review.reportReasonPlaceholder'));
     return;
   }
 
   if (reportReason.value === 'OTHER' && !reportDescription.value.trim()) {
-    message.warning('请输入详细描述');
+    message.warning(t('review.reportDescriptionPlaceholder'));
     return;
   }
 
@@ -348,19 +339,19 @@ const submitReport = async () => {
     });
 
     if (response.success) {
-      message.success('举报提交成功，我们会尽快处理');
+      message.success(t('review.reportSuccess'));
       reportVisible.value = false;
       reportReason.value = null;
       reportDescription.value = '';
     } else {
-      message.error(response.message || '举报提交失败');
+      message.error(response.message || t('review.reportFailed'));
     }
   } catch (error) {
-    console.error('举报提交失败:', error);
-    if (error.message && error.message.includes('已经举报')) {
-      message.warning('您已经举报过此评价');
+    console.error('Report submit error:', error);
+    if (error.message && error.message.includes('already reported')) {
+      message.warning(t('review.alreadyReported'));
     } else {
-      message.error('举报提交失败，请稍后重试');
+      message.error(t('review.reportFailed'));
     }
   } finally {
     reporting.value = false;

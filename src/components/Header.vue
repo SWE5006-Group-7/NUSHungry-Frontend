@@ -15,7 +15,7 @@
         allow-clear
         :style="searchStyle"
         size="large"
-        placeholder="Search for canteens, stalls, or dishes..."
+        :placeholder="$t('header.searchPlaceholder')"
         @search="handleSearch"
         @clear="handleSearch"
         @focus="onSearchFocus"
@@ -40,58 +40,109 @@
 
     <!-- 未登录状态 -->
     <div v-if="!userStore.isAuthenticated" class="auth-buttons">
+      <!-- 语言切换 -->
+      <a-dropdown placement="bottomRight" overlayClassName="locale-dropdown">
+        <div ref="localeMenuRef" class="locale-menu" :style="localeMenuStyle">
+          <GlobalOutlined class="locale-icon" />
+        </div>
+        <template #overlay>
+          <a-menu @click="handleLocaleChange" :selectedKeys="[localeStore.currentLocale]">
+            <a-menu-item key="zh-CN">
+              <div class="locale-menu-item">
+                <span>中文</span>
+                <CheckOutlined v-if="localeStore.currentLocale === 'zh-CN'" class="locale-check" />
+              </div>
+            </a-menu-item>
+            <a-menu-item key="en-US">
+              <div class="locale-menu-item">
+                <span>English</span>
+                <CheckOutlined v-if="localeStore.currentLocale === 'en-US'" class="locale-check" />
+              </div>
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+
       <a-button type="primary" ghost :style="signInBtn" @click="goToLogin">
-        登录
+        {{ $t('header.login') }}
       </a-button>
       <a-button type="primary" :style="{ marginLeft: '12px' }" @click="goToRegister">
-        注册
+        {{ $t('header.register') }}
       </a-button>
     </div>
 
     <!-- 已登录状态 -->
-    <a-dropdown v-else placement="bottomRight">
-      <div class="user-menu">
-        <a-avatar
-          :src="userStore.user?.avatarUrl ? getResourceUrl(userStore.user.avatarUrl) : undefined"
-          :style="{ backgroundColor: '#1890ff' }"
-        >
-          <template v-if="!userStore.user?.avatarUrl">
-            {{ userStore.username.charAt(0).toUpperCase() }}
-          </template>
-        </a-avatar>
-        <span class="username">{{ userStore.username }}</span>
-      </div>
-      <template #overlay>
-        <a-menu>
-          <a-menu-item key="profile" @click="goToProfile">
-            <UserOutlined />
-            个人中心
-          </a-menu-item>
-          <a-menu-item key="settings" @click="goToSettings">
-            <SettingOutlined />
-            设置
-          </a-menu-item>
-          <a-menu-item v-if="userIsAdmin" key="dashboard" @click="goToDashboard">
-            <DashboardOutlined />
-            管理后台
-          </a-menu-item>
-          <a-menu-divider />
-          <a-menu-item key="logout" @click="handleLogout">
-            <LogoutOutlined />
-            退出登录
-          </a-menu-item>
-        </a-menu>
-      </template>
-    </a-dropdown>
+    <div v-else class="user-section">
+      <!-- 语言切换 -->
+      <a-dropdown placement="bottomRight" overlayClassName="locale-dropdown">
+        <div ref="localeMenuRef" class="locale-menu" :style="localeMenuStyle">
+          <GlobalOutlined class="locale-icon" />
+        </div>
+        <template #overlay>
+          <a-menu @click="handleLocaleChange" :selectedKeys="[localeStore.currentLocale]">
+            <a-menu-item key="zh-CN">
+              <div class="locale-menu-item">
+                <span>中文</span>
+                <CheckOutlined v-if="localeStore.currentLocale === 'zh-CN'" class="locale-check" />
+              </div>
+            </a-menu-item>
+            <a-menu-item key="en-US">
+              <div class="locale-menu-item">
+                <span>English</span>
+                <CheckOutlined v-if="localeStore.currentLocale === 'en-US'" class="locale-check" />
+              </div>
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+
+      <!-- 用户菜单 -->
+      <a-dropdown placement="bottomRight">
+        <div ref="userMenuRef" class="user-menu">
+          <a-avatar
+            :src="userStore.user?.avatarUrl ? getResourceUrl(userStore.user.avatarUrl) : undefined"
+            :style="{ backgroundColor: '#ffffff', color: '#111827', border: '1px solid #d9d9d9' }"
+          >
+            <template v-if="!userStore.user?.avatarUrl">
+              {{ userStore.username.charAt(0).toUpperCase() }}
+            </template>
+          </a-avatar>
+          <span class="username">{{ userStore.username }}</span>
+        </div>
+        <template #overlay>
+          <a-menu>
+            <a-menu-item key="profile" @click="goToProfile">
+              <UserOutlined />
+              {{ $t('header.profile') }}
+            </a-menu-item>
+            <a-menu-item key="settings" @click="goToSettings">
+              <SettingOutlined />
+              {{ $t('header.settings') }}
+            </a-menu-item>
+            <a-menu-item v-if="userIsAdmin" key="dashboard" @click="goToDashboard">
+              <DashboardOutlined />
+              {{ $t('header.dashboard') }}
+            </a-menu-item>
+            <a-menu-divider />
+            <a-menu-item key="logout" @click="handleLogout">
+              <LogoutOutlined />
+              {{ $t('header.logout') }}
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+    </div>
   </a-layout-header>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { UserOutlined, SettingOutlined, LogoutOutlined, ClockCircleOutlined, DashboardOutlined } from '@ant-design/icons-vue'
+import { UserOutlined, SettingOutlined, LogoutOutlined, ClockCircleOutlined, DashboardOutlined, GlobalOutlined, CheckOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { useLocaleStore } from '@/stores/locale'
 import { getResourceUrl } from '@/utils/config'
 import searchService from '@/services/searchService'
 import { isAdmin } from '@/utils/role'
@@ -99,11 +150,31 @@ import { isAdmin } from '@/utils/role'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const localeStore = useLocaleStore()
+const { locale, t } = useI18n()
 
 const searchKeyword = ref('')
 const searchOptions = ref([])
 const recentKeywords = ref([])
 const dropdownVisible = ref(false)
+
+// refs for menu height synchronization
+const localeMenuRef = ref(null)
+const userMenuRef = ref(null)
+const localeMenuStyle = ref({ marginRight: '12px' })
+
+// Sync locale menu height with user menu height
+const syncMenuHeights = () => {
+  nextTick(() => {
+    if (userMenuRef.value) {
+      const userMenuHeight = userMenuRef.value.offsetHeight
+      localeMenuStyle.value = {
+        marginRight: '12px',
+        height: `${userMenuHeight}px`
+      }
+    }
+  })
+}
 
 // 检查当前用户是否是管理员
 const userIsAdmin = computed(() => isAdmin())
@@ -269,6 +340,7 @@ watch(() => userStore.isAuthenticated, (isAuth) => {
     recentKeywords.value = []
     searchOptions.value = []
   }
+  syncMenuHeights()
 })
 
 onMounted(() => {
@@ -278,6 +350,9 @@ onMounted(() => {
   if (route.query.keyword) {
     searchKeyword.value = route.query.keyword
   }
+
+  // 同步菜单高度
+  syncMenuHeights()
 })
 
 const goToHome = () => {
@@ -308,13 +383,29 @@ const goToDashboard = () => {
 
 const handleLogout = () => {
   userStore.logout()
-  message.success('已退出登录')
+  message.success(t('auth.logoutSuccess'))
   router.push('/')
 }
+
+// 处理语言切换
+const handleLocaleChange = ({ key }) => {
+  localeStore.setLocale(key)
+  locale.value = key
+}
+
+// 监听 locale store 的变化并同步到 i18n
+watch(() => localeStore.currentLocale, (newLocale) => {
+  locale.value = newLocale
+}, { immediate: true })
 </script>
 
 <style scoped>
 .auth-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.user-section {
   display: flex;
   align-items: center;
 }
@@ -326,16 +417,47 @@ const handleLogout = () => {
   cursor: pointer;
   padding: 4px 12px;
   border-radius: 4px;
-  transition: background-color 0.3s;
-}
-
-.user-menu:hover {
-  background-color: #f5f5f5;
 }
 
 .username {
   font-weight: 500;
   color: #111827;
+  transition: color 0.3s;
+}
+
+.user-menu:hover .username {
+  color: #1890ff;
+}
+
+.locale-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.locale-icon {
+  font-size: 18px;
+  color: #111827;
+  transition: color 0.3s;
+}
+
+.locale-menu:hover .locale-icon {
+  color: #1890ff;
+}
+
+.locale-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 120px;
+}
+
+.locale-check {
+  color: #1890ff;
+  margin-left: 8px;
 }
 
 .search-option {
@@ -362,5 +484,11 @@ const handleLogout = () => {
 
 :deep(.search-dropdown-menu .ant-menu-item:hover) {
   background-color: #f5f5f5;
+}
+</style>
+
+<style>
+.locale-dropdown {
+  z-index: 10000 !important;
 }
 </style>

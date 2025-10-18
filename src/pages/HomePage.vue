@@ -39,16 +39,16 @@
                 <a-row :gutter="[16, 16]" class="compact-filters">
                   <!-- Opening Hours section - takes full width on large screens, left column on small screens -->
                   <a-col :xs="10" :lg="24" class="opening-section">
-                    <a-typography-title :level="5" style="margin-top:0; margin-bottom: 12px;">Opening Hours</a-typography-title>
+                    <a-typography-title :level="5" style="margin-top:0; margin-bottom: 12px;">{{ $t('home.openingHours') }}</a-typography-title>
                     <a-space direction="vertical">
-                      <a-checkbox v-model:checked="openNow">Open now</a-checkbox>
+                      <a-checkbox v-model:checked="openNow">{{ $t('home.openNow') }}</a-checkbox>
                     </a-space>
                   </a-col>
 
                   <!-- Distance and Price section - stacked vertically on both screen sizes, right column on small screens -->
                   <a-col :xs="14" :lg="24" class="range-section">
                     <div style="margin-bottom: 16px;">
-                      <a-typography-title :level="5" style="margin-top:0; margin-bottom: 8px;">Distance</a-typography-title>
+                      <a-typography-title :level="5" style="margin-top:0; margin-bottom: 8px;">{{ $t('home.distance') }}</a-typography-title>
                       <a-slider :min="0" :max="2" :step="0.1" v-model:value="distanceKm" />
                       <div style="display:flex; justify-content:space-between; color:#64748b; font-size:12px; margin-top: 4px;">
                         <span>{{ distanceKm.toFixed(1) }} km</span>
@@ -57,7 +57,7 @@
                     </div>
 
                     <div>
-                      <a-typography-title :level="5" style="margin-top:0; margin-bottom: 8px;">Price Range</a-typography-title>
+                      <a-typography-title :level="5" style="margin-top:0; margin-bottom: 8px;">{{ $t('home.priceRange') }}</a-typography-title>
                       <a-slider range :min="0" :max="50" v-model:value="priceRange" />
                       <div style="display:flex; justify-content:space-between; color:#64748b; font-size:12px; margin-top: 4px;">
                         <span>$0 - ${{ priceRange[1] }}</span>
@@ -85,10 +85,10 @@
             </div>
             <a-card :style="cardStyle" :body-style="{ padding: '28px' }">
               <div :style="cardHeaderStyle">
-                <a-typography-title :level="3" :style="{ margin: 0, color: '#1f2937', fontWeight: 700 }">Nearby Stalls</a-typography-title>
+                <a-typography-title :level="3" :style="{ margin: 0, color: '#1f2937', fontWeight: 700 }">{{ $t('home.nearbyStalls') }}</a-typography-title>
                 <a-space>
-                  <a-button size="middle" :style="getOpeningBtnStyle" @click="openNow = !openNow">Opening</a-button>
-                  <a-button size="middle" :style="getSortBtnStyle" @click="toggleSort">Sort by Rating</a-button>
+                  <a-button size="middle" :style="getOpeningBtnStyle" @click="openNow = !openNow">{{ $t('home.opening') }}</a-button>
+                  <a-button size="middle" :style="getSortBtnStyle" @click="toggleSort">{{ $t('home.sortByRating') }}</a-button>
                 </a-space>
               </div>
 
@@ -106,7 +106,7 @@
 
     <a-layout-footer :style="footerStyle">
       <a-typography-text :style="{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', fontWeight: 500 }">
-        NUSHungry © 2025
+        {{ $t('footer.copyright') }}
       </a-typography-text>
     </a-layout-footer>
   </a-layout>

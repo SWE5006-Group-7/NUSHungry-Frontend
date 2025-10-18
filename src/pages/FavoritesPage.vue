@@ -15,8 +15,8 @@
           </a-button>
           <StarFilled class="page-icon" />
           <div>
-            <h1 class="page-title">我的收藏</h1>
-            <p class="page-subtitle">共 {{ favorites.length }} 个收藏</p>
+            <h1 class="page-title">{{ $t('favorites.title') }}</h1>
+            <p class="page-subtitle">{{ $t('favorites.totalCount', { count: favorites.length }) }}</p>
           </div>
         </div>
         <div class="header-actions">
@@ -26,7 +26,7 @@
             @click="enterEditMode"
           >
             <EditOutlined />
-            管理收藏
+            {{ $t('favorites.manageFavorites') }}
           </a-button>
           <template v-if="isEditMode">
             <a-button
@@ -36,10 +36,10 @@
               @click="handleBatchDelete"
             >
               <DeleteOutlined />
-              删除选中 ({{ selectedFavorites.length }})
+              {{ $t('favorites.deleteSelected') }} ({{ selectedFavorites.length }})
             </a-button>
             <a-button @click="exitEditMode">
-              取消
+              {{ $t('common.cancel') }}
             </a-button>
           </template>
         </div>
@@ -49,12 +49,12 @@
       <a-spin :spinning="loading">
         <!-- 空状态 -->
         <div v-if="favorites.length === 0" class="empty-state">
-          <a-empty description="暂无收藏">
+          <a-empty :description="$t('favorites.noFavorites')">
             <template #image>
               <StarOutlined style="font-size: 64px; color: #d9d9d9;" />
             </template>
             <a-button type="primary" @click="$router.push('/')">
-              去逛逛
+              {{ $t('favorites.goExplore') }}
             </a-button>
           </a-empty>
         </div>
@@ -133,7 +133,7 @@
                     <!-- 收藏时间 -->
                     <p class="favorite-date">
                       <ClockCircleOutlined />
-                      收藏于 {{ formatDate(element.createdAt) }}
+                      {{ $t('favorites.favoritedAt') }} {{ formatDate(element.createdAt) }}
                     </p>
                   </div>
                 </div>
@@ -146,9 +146,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   HeartOutlined,
   ShopOutlined,
@@ -167,6 +168,7 @@ import Header from '@/components/Header.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const favorites = ref([])
 const loading = ref(false)
@@ -179,7 +181,7 @@ const loadFavorites = async () => {
     loading.value = true
     const userId = userStore.user?.id
     if (!userId) {
-      message.error('请先登录')
+      message.error(t('messages.pleaseLogin'))
       router.push('/login')
       return
     }
@@ -187,7 +189,7 @@ const loadFavorites = async () => {
     const data = await favoriteService.getUserFavoritesDetailed(userId.toString())
     favorites.value = data
   } catch (error) {
-    message.error('加载收藏失败')
+    message.error(t('profile.loadFavoritesFailed'))
     console.error('Load favorites error:', error)
   } finally {
     loading.value = false
@@ -224,11 +226,11 @@ const isSelected = (favoriteId) => {
 // 批量删除
 const handleBatchDelete = () => {
   Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除选中的 ${selectedFavorites.value.length} 个收藏吗?`,
-    okText: '确认',
+    title: t('favorites.confirmDelete'),
+    content: t('favorites.confirmDeleteContent', { count: selectedFavorites.value.length }),
+    okText: t('common.confirm'),
     okType: 'danger',
-    cancelText: '取消',
+    cancelText: t('common.cancel'),
     onOk: async () => {
       try {
         const userId = userStore.user?.id
@@ -239,11 +241,11 @@ const handleBatchDelete = () => {
           selectedFavorites.value
         )
 
-        message.success('删除成功')
+        message.success(t('common.deleteSuccess'))
         exitEditMode()
         await loadFavorites()
       } catch (error) {
-        message.error('删除失败')
+        message.error(t('common.deleteFailed'))
         console.error('Batch delete error:', error)
       }
     }
@@ -253,21 +255,21 @@ const handleBatchDelete = () => {
 // 删除单个收藏
 const handleRemoveSingle = (favoriteId) => {
   Modal.confirm({
-    title: '确认取消收藏',
-    content: '确定要取消收藏这个摊位吗?',
-    okText: '确认',
+    title: t('profile.confirmRemoveFavorite'),
+    content: t('profile.confirmRemoveFavoriteContent'),
+    okText: t('common.confirm'),
     okType: 'danger',
-    cancelText: '取消',
+    cancelText: t('common.cancel'),
     onOk: async () => {
       try {
         const userId = userStore.user?.id
         if (!userId) return
 
         await favoriteService.removeFavoriteById(userId.toString(), favoriteId)
-        message.success('已取消收藏')
+        message.success(t('profile.removeFavoriteSuccess'))
         await loadFavorites()
       } catch (error) {
-        message.error('操作失败')
+        message.error(t('messages.operationFailed'))
         console.error('Remove favorite error:', error)
       }
     }

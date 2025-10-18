@@ -4,19 +4,19 @@
     <div class="dashboard-header">
       <div class="header-content">
         <div>
-          <h1>仪表板</h1>
-          <p>欢迎回来，{{ userInfo?.username || 'Admin' }}！这里是系统数据概览。</p>
+          <h1>{{ $t('dashboard.title') }}</h1>
+          <p>{{ $t('dashboard.welcome', { username: userInfo?.username || 'Admin' }) }}</p>
         </div>
         <a-button type="primary" size="large" @click="goToHomepage">
           <template #icon><ShoppingOutlined /></template>
-          前往首页
+          {{ $t('dashboard.goToHomepage') }}
         </a-button>
       </div>
     </div>
 
     <!-- 快捷操作 -->
     <div class="quick-actions">
-      <h3>快捷操作</h3>
+      <h3>{{ $t('dashboard.quickActions') }}</h3>
       <a-row :gutter="[16, 16]" class="quick-actions-row">
         <a-col :flex="1" v-for="action in quickActions" :key="action.title">
           <div class="action-card" @click="handleQuickAction(action)">
@@ -29,7 +29,7 @@
 
     <!-- 统计卡片区域 -->
     <div class="stats-section">
-      <h3>数据概览</h3>
+      <h3>{{ $t('dashboard.dataOverview') }}</h3>
       <a-row :gutter="[16, 16]" class="stats-cards">
       <a-col :xs="12" :sm="12" :md="6" v-for="card in statsCards" :key="card.title">
         <a-card :loading="statsLoading" hoverable>
@@ -57,7 +57,7 @@
     <a-row :gutter="[16, 16]" class="charts-section">
       <!-- 用户增长趋势 -->
       <a-col :xs="24">
-        <a-card title="用户增长趋势" :loading="chartsLoading">
+        <a-card :title="$t('dashboard.userGrowthTrend')" :loading="chartsLoading">
           <template #extra>
             <a-space>
               <a-segmented
@@ -73,7 +73,7 @@
             </a-space>
           </template>
           <div class="chart-container" style="height: 300px;">
-            <a-empty v-if="!userGrowthData.length" description="暂无数据" />
+            <a-empty v-if="!userGrowthData.length" :description="$t('dashboard.noData')" />
             <div v-else ref="userGrowthChart" style="width: 100%; height: 100%;"></div>
           </div>
         </a-card>
@@ -84,10 +84,10 @@
     <a-row :gutter="[16, 16]" class="tables-section">
       <!-- 最新用户 -->
       <a-col :xs="24" :lg="12">
-        <a-card title="最新注册用户" class="table-card-equal-height">
+        <a-card :title="$t('dashboard.latestUsers')" class="table-card-equal-height">
           <template #extra>
             <a-button type="link" @click="goToUserManagement">
-              查看全部 <RightOutlined />
+              {{ $t('dashboard.viewAll') }} <RightOutlined />
             </a-button>
           </template>
           <a-table
@@ -102,10 +102,10 @@
 
       <!-- 最新评价 -->
       <a-col :xs="24" :lg="12">
-        <a-card title="最新评价" class="table-card-equal-height">
+        <a-card :title="$t('dashboard.latestReviews')" class="table-card-equal-height">
           <template #extra>
             <a-button type="link" @click="goToReviewManagement">
-              查看全部 <RightOutlined />
+              {{ $t('dashboard.viewAll') }} <RightOutlined />
             </a-button>
           </template>
           <a-table
@@ -134,6 +134,7 @@
 import { ref, reactive, onMounted, onBeforeUnmount, computed, h, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { message, Avatar, Tag } from 'ant-design-vue';
+import { useI18n } from 'vue-i18n';
 import dayjs from 'dayjs';
 import * as echarts from 'echarts';
 import {
@@ -153,6 +154,7 @@ import {
 import adminDashboardApi from '@/api/admin/dashboard';
 
 const router = useRouter();
+const { t } = useI18n();
 
 // 用户信息
 const userInfo = ref(JSON.parse(localStorage.getItem('userInfo') || '{}'));
@@ -166,40 +168,51 @@ const tablesLoading = ref(false);
 const dateRange = ref([dayjs().subtract(7, 'days'), dayjs()]);
 
 // 日期预设
-const datePresets = ref([
-  { label: '最近7天', value: [dayjs().subtract(7, 'days'), dayjs()] },
-  { label: '最近30天', value: [dayjs().subtract(30, 'days'), dayjs()] },
-  { label: '最近3个月', value: [dayjs().subtract(3, 'months'), dayjs()] }
+const datePresets = computed(() => [
+  { label: t('dashboard.datePresets.last7Days'), value: [dayjs().subtract(7, 'days'), dayjs()] },
+  { label: t('dashboard.datePresets.last30Days'), value: [dayjs().subtract(30, 'days'), dayjs()] },
+  { label: t('dashboard.datePresets.last3Months'), value: [dayjs().subtract(3, 'months'), dayjs()] }
 ]);
 
+// 统计数据的存储
+const statsData = ref({
+  totalUsers: 0,
+  userTrend: 0,
+  totalCafeterias: 0,
+  cafeteriaTrend: 0,
+  totalStalls: 0,
+  totalReviews: 0,
+  reviewTrend: 0
+});
+
 // 统计卡片数据
-const statsCards = ref([
+const statsCards = computed(() => [
   {
-    title: '总用户数',
-    value: 0,
+    title: t('dashboard.totalUsers'),
+    value: statsData.value.totalUsers,
     icon: UserOutlined,
     color: '#1890ff',
-    trend: 0
+    trend: statsData.value.userTrend
   },
   {
-    title: '总食堂数',
-    value: 0,
+    title: t('dashboard.totalCafeterias'),
+    value: statsData.value.totalCafeterias,
     icon: ShoppingOutlined,
     color: '#52c41a',
-    trend: 0
+    trend: statsData.value.cafeteriaTrend
   },
   {
-    title: '总摊位数',
-    value: 0,
+    title: t('dashboard.totalStalls'),
+    value: statsData.value.totalStalls,
     icon: ShoppingOutlined,
     color: '#13c2c2'
   },
   {
-    title: '总评价数',
-    value: 0,
+    title: t('dashboard.totalReviews'),
+    value: statsData.value.totalReviews,
     icon: StarOutlined,
     color: '#faad14',
-    trend: 0
+    trend: statsData.value.reviewTrend
   }
 ]);
 
@@ -208,10 +221,10 @@ const userGrowthData = ref([]);
 
 // 图表视图模式
 const chartViewMode = ref('incremental'); // 'incremental' 或 'cumulative'
-const chartViewOptions = [
-  { label: '新增用户', value: 'incremental' },
-  { label: '累计用户', value: 'cumulative' }
-];
+const chartViewOptions = computed(() => [
+  { label: t('dashboard.chartView.incremental'), value: 'incremental' },
+  { label: t('dashboard.chartView.cumulative'), value: 'cumulative' }
+]);
 
 // 图表实例
 const userGrowthChart = ref(null);
@@ -226,10 +239,10 @@ const defaultAvatar = '/default-avatar.png';
 // 获取角色名称
 const getRoleName = (role) => {
   const roleMap = {
-    'ROLE_ADMIN': '管理员',
-    'ROLE_USER': '普通用户',
-    'ADMIN': '管理员',
-    'USER': '普通用户'
+    'ROLE_ADMIN': t('dashboard.roleNames.admin'),
+    'ROLE_USER': t('dashboard.roleNames.user'),
+    'ADMIN': t('dashboard.roleNames.admin'),
+    'USER': t('dashboard.roleNames.user')
   };
   return roleMap[role] || role;
 };
@@ -246,9 +259,9 @@ const getRoleTagColor = (role) => {
 };
 
 // 用户表格列配置
-const userColumns = [
+const userColumns = computed(() => [
   {
-    title: '用户',
+    title: t('dashboard.user'),
     key: 'user',
     customRender: ({ record }) => {
       return h('div', {
@@ -272,7 +285,7 @@ const userColumns = [
     }
   },
   {
-    title: '角色',
+    title: t('dashboard.role'),
     key: 'role',
     width: 100,
     customRender: ({ record }) => {
@@ -280,32 +293,32 @@ const userColumns = [
     }
   },
   {
-    title: '注册时间',
+    title: t('dashboard.registrationTime'),
     dataIndex: 'createdAt',
     key: 'createdAt',
     width: 150,
     customRender: ({ text }) => formatDate(text)
   }
-];
+]);
 
 // 最新评价数据
 const latestReviews = ref([]);
 
 // 评价表格列配置
-const reviewColumns = [
-  { title: '用户', dataIndex: 'username', key: 'username', width: 100 },
-  { title: '摊位', dataIndex: 'stallName', key: 'stallName' },
-  { title: '评分', key: 'rating', width: 150 },
-  { title: '时间', dataIndex: 'createdAt', key: 'createdAt' }
-];
+const reviewColumns = computed(() => [
+  { title: t('dashboard.username'), dataIndex: 'username', key: 'username', width: 100 },
+  { title: t('dashboard.stallName'), dataIndex: 'stallName', key: 'stallName' },
+  { title: t('dashboard.rating'), key: 'rating', width: 150 },
+  { title: t('dashboard.time'), dataIndex: 'createdAt', key: 'createdAt' }
+]);
 
 // 快捷操作
-const quickActions = ref([
-  { title: '食堂管理', icon: ShoppingOutlined, color: '#13c2c2', action: 'manageCafeterias' },
-  { title: '摊位管理', icon: ShoppingOutlined, color: '#722ed1', action: 'manageStalls' },
-  { title: '用户管理', icon: UserOutlined, color: '#1890ff', action: 'manageUsers' },
-  { title: '评价管理', icon: StarOutlined, color: '#faad14', action: 'manageReviews' },
-  { title: '图片管理', icon: PictureOutlined, color: '#eb2f96', action: 'manageImages' }
+const quickActions = computed(() => [
+  { title: t('dashboard.actions.manageCafeterias'), icon: ShoppingOutlined, color: '#13c2c2', action: 'manageCafeterias' },
+  { title: t('dashboard.actions.manageStalls'), icon: ShoppingOutlined, color: '#722ed1', action: 'manageStalls' },
+  { title: t('dashboard.actions.manageUsers'), icon: UserOutlined, color: '#1890ff', action: 'manageUsers' },
+  { title: t('dashboard.actions.manageReviews'), icon: StarOutlined, color: '#faad14', action: 'manageReviews' },
+  { title: t('dashboard.actions.manageImages'), icon: PictureOutlined, color: '#eb2f96', action: 'manageImages' }
 ]);
 
 // 格式化日期
@@ -325,35 +338,15 @@ const fetchDashboardData = async () => {
 
     // 更新统计卡片
     if (data.statsCards) {
-      statsCards.value = [
-        {
-          title: '总用户数',
-          value: data.statsCards.totalUsers || 0,
-          icon: UserOutlined,
-          color: '#1890ff',
-          trend: data.statsCards.userTrend || 0
-        },
-        {
-          title: '总食堂数',
-          value: data.statsCards.totalCafeterias || 0,
-          icon: ShoppingOutlined,
-          color: '#52c41a',
-          trend: data.statsCards.cafeteriaTrend || 0
-        },
-        {
-          title: '总摊位数',
-          value: data.statsCards.totalStalls || 0,
-          icon: ShoppingOutlined,
-          color: '#13c2c2'
-        },
-        {
-          title: '总评价数',
-          value: data.statsCards.totalReviews || 0,
-          icon: StarOutlined,
-          color: '#faad14',
-          trend: data.statsCards.reviewTrend || 0
-        }
-      ];
+      statsData.value = {
+        totalUsers: data.statsCards.totalUsers || 0,
+        userTrend: data.statsCards.userTrend || 0,
+        totalCafeterias: data.statsCards.totalCafeterias || 0,
+        cafeteriaTrend: data.statsCards.cafeteriaTrend || 0,
+        totalStalls: data.statsCards.totalStalls || 0,
+        totalReviews: data.statsCards.totalReviews || 0,
+        reviewTrend: data.statsCards.reviewTrend || 0
+      };
     }
 
     // 更新用户增长数据
@@ -379,7 +372,7 @@ const fetchDashboardData = async () => {
 
   } catch (error) {
     console.error('Failed to fetch dashboard data:', error);
-    message.error('获取仪表板数据失败');
+    message.error(t('dashboard.loadFailed'));
   } finally {
     statsLoading.value = false;
     chartsLoading.value = false;
@@ -446,7 +439,7 @@ const initUserGrowthChart = () => {
 
   // 计算累计数据
   let displayData = counts;
-  let labelText = '新增用户';
+  let labelText = t('dashboard.chartView.incremental');
 
   if (chartViewMode.value === 'cumulative') {
     displayData = [];
@@ -455,7 +448,7 @@ const initUserGrowthChart = () => {
       cumulative += count;
       displayData.push(cumulative);
     }
-    labelText = '累计用户';
+    labelText = t('dashboard.chartView.cumulative');
   }
 
   // 配置现代折线图选项
@@ -612,7 +605,7 @@ const fetchUserGrowth = async () => {
     }
   } catch (error) {
     console.error('Failed to fetch user growth data:', error);
-    message.error('获取用户增长数据失败');
+    message.error(t('dashboard.userGrowthLoadFailed'));
   } finally {
     chartsLoading.value = false;
   }

@@ -14,7 +14,7 @@
         @error="handleImageError"
         alt="Stall image"
       />
-      <a-tag :color="stall.isOpen ? 'green' : 'default'" :style="openTag">{{ stall.isOpen ? 'Open' : 'Closed' }}</a-tag>
+      <a-tag :color="stall.isOpen ? 'green' : 'default'" :style="openTag">{{ stall.isOpen ? $t('home.opening') : $t('time.closed') }}</a-tag>
       <a-tag color="default" :style="distanceTag">⟂ {{ stall.distance || '0.8 km' }}</a-tag>
     </div>
 
@@ -33,10 +33,10 @@
         <div style="display: flex; align-items: center; flex: 1; min-width: 0;">
           <a-rate :value="stall.rating || 0" disabled style="font-size:14px; margin-right:6px" />
           <strong style="color:#f7931e;">{{ stall.rating || 0 }}</strong>
-          <a-typography-text type="secondary" style="margin-left:8px">· {{ stall.reviews || 0 }} reviews</a-typography-text>
+          <a-typography-text type="secondary" style="margin-left:8px">· {{ stall.reviews || 0 }} {{ $t('stall.reviews') }}</a-typography-text>
         </div>
         <a-tag v-if="stall.averagePrice && stall.averagePrice > 0" color="default" style="flex-shrink: 0; margin: 0;">
-          ${{ stall.averagePrice.toFixed(2) }} per
+          ${{ stall.averagePrice.toFixed(2) }}
         </a-tag>
       </div>
     </div>
@@ -75,7 +75,7 @@ const imageUrl = computed(() => {
 
 // 处理图片加载失败
 const handleImageError = (e) => {
-  console.log('图片加载失败:', props.stall.image)
+  console.log('Image load failed:', props.stall.image)
   imageFailed.value = true
   e.target.src = defaultImage
 }
