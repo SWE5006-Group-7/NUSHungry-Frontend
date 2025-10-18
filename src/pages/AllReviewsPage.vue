@@ -8,13 +8,13 @@
         <div style="margin-bottom: 24px;">
           <a-button type="link" @click="goBack" style="padding-left: 0; margin-bottom: 16px;">
             <template #icon><ArrowLeftOutlined /></template>
-            返回摊位详情
+            {{ $t('review.backToStallDetail') }}
           </a-button>
 
           <a-typography-title :level="3" style="margin: 0;">
-            全部评价
+            {{ $t('review.allReviews') }}
             <a-typography-text type="secondary" style="font-size: 16px; font-weight: normal; margin-left: 8px;">
-              ({{ total }} 条评价)
+              ({{ $t('review.totalReviews', { count: total }) }})
             </a-typography-text>
           </a-typography-title>
         </div>
@@ -24,7 +24,7 @@
           <a-col :xs="24" :lg="8">
             <a-card :style="cardStyle" :body-style="{ padding: '24px' }">
               <template #title>
-                <a-tag color="orange-inverse">评分分布</a-tag>
+                <a-tag color="orange-inverse">{{ $t('review.ratingDistribution') }}</a-tag>
               </template>
 
               <!-- 平均分 -->
@@ -41,7 +41,7 @@
                   />
                 </div>
                 <a-typography-text type="secondary" class="rating-desc">
-                  基于 {{ ratingDistribution.total || 0 }} 条评价
+                  {{ $t('review.basedOn', { count: ratingDistribution.total || 0 }) }}
                 </a-typography-text>
               </div>
 
@@ -52,7 +52,7 @@
                   :key="star"
                   class="rating-bar-row"
                 >
-                  <span class="star-label">{{ star }}星</span>
+                  <span class="star-label">{{ star }} {{ $t('review.stars') }}</span>
                   <div class="bar-container">
                     <div
                       class="bar-fill"
@@ -73,7 +73,7 @@
             <a-card :style="cardStyle" :body-style="{ padding: '24px' }">
               <template #title>
                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                  <a-tag color="blue-inverse">全部评价</a-tag>
+                  <a-tag color="blue-inverse">{{ $t('review.allReviews') }}</a-tag>
 
                   <!-- 排序选择器 -->
                   <a-select
@@ -81,8 +81,8 @@
                     style="width: 150px;"
                     @change="handleSortChange"
                   >
-                    <a-select-option value="createdAt">最新优先</a-select-option>
-                    <a-select-option value="likesCount">最多点赞</a-select-option>
+                    <a-select-option value="createdAt">{{ $t('review.sortByLatest') }}</a-select-option>
+                    <a-select-option value="likesCount">{{ $t('review.sortByLikes') }}</a-select-option>
                   </a-select>
                 </div>
               </template>
@@ -111,7 +111,7 @@
                     v-model:page-size="pageSize"
                     :total="total"
                     :show-size-changer="false"
-                    :show-total="total => `共 ${total} 条评价`"
+                    :show-total="total => t('review.totalReviews', { count: total })"
                     @change="handlePageChange"
                   />
                 </div>
@@ -120,7 +120,7 @@
               <!-- 空状态 -->
               <a-empty
                 v-else
-                description="暂无评价"
+                :description="$t('profile.noReviews')"
                 class="empty-state"
               />
             </a-card>
@@ -132,7 +132,7 @@
     <!-- 评价表单弹窗 -->
     <a-modal
       v-model:open="showFormModal"
-      :title="editingReview ? '编辑评价' : '写评价'"
+      :title="editingReview ? $t('review.editReview') : $t('review.writeReview')"
       :footer="null"
       width="700px"
       :destroyOnClose="true"
@@ -151,6 +151,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { ArrowLeftOutlined } from '@ant-design/icons-vue'
 import Header from '@/components/Header.vue'
 import ReviewCard from '@/components/ReviewCard.vue'
@@ -159,6 +160,7 @@ import reviewService from '@/services/reviewService'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 const stallId = parseInt(route.params.stallId)
 const reviews = ref([])
@@ -180,7 +182,7 @@ const loadRatingDistribution = async () => {
       ratingDistribution.value = response.data
     }
   } catch (error) {
-    console.error('加载评分分布失败:', error)
+    console.error('Load rating distribution error:', error)
   }
 }
 
@@ -199,11 +201,11 @@ const loadReviews = async () => {
       total.value = response.totalItems || 0
       totalPages.value = response.totalPages || 0
     } else {
-      message.error(response.message || '加载评价失败')
+      message.error(response.message || t('profile.loadReviewsFailed'))
     }
   } catch (error) {
-    console.error('加载评价失败:', error)
-    message.error('加载评价失败，请稍后重试')
+    console.error('Load reviews error:', error)
+    message.error(t('profile.loadReviewsFailed'))
   } finally {
     loading.value = false
   }

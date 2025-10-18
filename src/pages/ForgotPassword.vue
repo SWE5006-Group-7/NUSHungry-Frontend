@@ -1,11 +1,11 @@
 <template>
   <div class="forgot-password-container">
-    <a-card class="forgot-password-card" title="找回密码">
+    <a-card class="forgot-password-card" :title="$t('forgotPassword.title')">
       <!-- 步骤指示器 -->
       <a-steps :current="currentStep" class="steps">
-        <a-step title="输入邮箱" />
-        <a-step title="验证身份" />
-        <a-step title="重置密码" />
+        <a-step :title="$t('forgotPassword.stepEmail')" />
+        <a-step :title="$t('forgotPassword.stepVerify')" />
+        <a-step :title="$t('forgotPassword.stepReset')" />
       </a-steps>
 
       <!-- 第一步:输入邮箱 -->
@@ -16,10 +16,10 @@
           @finish="handleSendCode"
           layout="vertical"
         >
-          <a-form-item label="邮箱地址" name="email">
+          <a-form-item :label="$t('forgotPassword.emailLabel')" name="email">
             <a-input
               v-model:value="emailForm.email"
-              placeholder="请输入注册时使用的邮箱"
+              :placeholder="$t('forgotPassword.emailPlaceholder')"
               size="large"
             >
               <template #prefix>
@@ -36,7 +36,7 @@
               block
               :loading="loading"
             >
-              发送验证码
+              {{ $t('forgotPassword.sendCode') }}
             </a-button>
           </a-form-item>
         </a-form>
@@ -45,8 +45,8 @@
       <!-- 第二步:验证码 -->
       <div v-if="currentStep === 1" class="step-content">
         <a-alert
-          message="验证码已发送"
-          :description="`验证码已发送至 ${emailForm.email},请注意查收`"
+          :message="$t('forgotPassword.codeSent')"
+          :description="$t('forgotPassword.codeDescription', { email: emailForm.email })"
           type="success"
           show-icon
           class="alert-info"
@@ -58,10 +58,10 @@
           @finish="handleVerifyCode"
           layout="vertical"
         >
-          <a-form-item label="验证码" name="code">
+          <a-form-item :label="$t('forgotPassword.verificationCode')" name="code">
             <a-input
               v-model:value="codeForm.code"
-              placeholder="请输入6位验证码"
+              :placeholder="$t('forgotPassword.verificationCodePlaceholder')"
               size="large"
               maxlength="6"
             >
@@ -80,7 +80,7 @@
                 block
                 :loading="loading"
               >
-                验证
+                {{ $t('forgotPassword.verify') }}
               </a-button>
 
               <a-button
@@ -89,7 +89,7 @@
                 :disabled="countdown > 0"
                 @click="handleResendCode"
               >
-                {{ countdown > 0 ? `${countdown}秒后可重新发送` : '重新发送验证码' }}
+                {{ countdown > 0 ? $t('forgotPassword.resendCountdown', { n: countdown }) : $t('forgotPassword.resendCode') }}
               </a-button>
             </a-space>
           </a-form-item>
@@ -99,8 +99,8 @@
       <!-- 第三步:重置密码 -->
       <div v-if="currentStep === 2" class="step-content">
         <a-alert
-          message="验证成功"
-          description="请设置新密码"
+          :message="$t('forgotPassword.verificationSuccess')"
+          :description="$t('forgotPassword.setNewPassword')"
           type="success"
           show-icon
           class="alert-info"
@@ -112,10 +112,10 @@
           @finish="handleResetPassword"
           layout="vertical"
         >
-          <a-form-item label="新密码" name="newPassword">
+          <a-form-item :label="$t('forgotPassword.newPassword')" name="newPassword">
             <a-input-password
               v-model:value="passwordForm.newPassword"
-              placeholder="请输入新密码(6-20个字符)"
+              :placeholder="$t('forgotPassword.newPasswordPlaceholder')"
               size="large"
             >
               <template #prefix>
@@ -124,10 +124,10 @@
             </a-input-password>
           </a-form-item>
 
-          <a-form-item label="确认密码" name="confirmPassword">
+          <a-form-item :label="$t('forgotPassword.confirmPassword')" name="confirmPassword">
             <a-input-password
               v-model:value="passwordForm.confirmPassword"
-              placeholder="请再次输入新密码"
+              :placeholder="$t('forgotPassword.confirmPasswordPlaceholder')"
               size="large"
             >
               <template #prefix>
@@ -144,7 +144,7 @@
               block
               :loading="loading"
             >
-              重置密码
+              {{ $t('forgotPassword.resetPassword') }}
             </a-button>
           </a-form-item>
         </a-form>
@@ -152,16 +152,17 @@
 
       <!-- 返回登录 -->
       <div class="footer">
-        <a @click="goToLogin">返回登录</a>
+        <a @click="goToLogin">{{ $t('forgotPassword.backToLogin') }}</a>
       </div>
     </a-card>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   MailOutlined,
   LockOutlined,
@@ -170,6 +171,7 @@ import {
 import axios from 'axios'
 
 const router = useRouter()
+const { t } = useI18n()
 const loading = ref(false)
 const currentStep = ref(0)
 const countdown = ref(0)
@@ -179,24 +181,24 @@ const emailForm = reactive({
   email: ''
 })
 
-const emailRules = {
+const emailRules = computed(() => ({
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+    { required: true, message: t('forgotPassword.emailRequired'), trigger: 'blur' },
+    { type: 'email', message: t('auth.emailInvalid'), trigger: 'blur' }
   ]
-}
+}))
 
 // 第二步:验证码表单
 const codeForm = reactive({
   code: ''
 })
 
-const codeRules = {
+const codeRules = computed(() => ({
   code: [
-    { required: true, message: '请输入验证码', trigger: 'blur' },
-    { len: 6, message: '验证码长度为6位', trigger: 'blur' }
+    { required: true, message: t('forgotPassword.codeRequired'), trigger: 'blur' },
+    { len: 6, message: t('forgotPassword.codeLength'), trigger: 'blur' }
   ]
-}
+}))
 
 // 第三步:密码表单
 const passwordForm = reactive({
@@ -204,24 +206,24 @@ const passwordForm = reactive({
   confirmPassword: ''
 })
 
-const passwordRules = {
+const passwordRules = computed(() => ({
   newPassword: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' }
+    { required: true, message: t('auth.passwordRequired'), trigger: 'blur' },
+    { min: 6, max: 20, message: t('forgotPassword.passwordLength'), trigger: 'blur' }
   ],
   confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
+    { required: true, message: t('auth.confirmPasswordRequired'), trigger: 'blur' },
     {
       validator: (rule, value) => {
         if (value !== passwordForm.newPassword) {
-          return Promise.reject('两次输入的密码不一致')
+          return Promise.reject(t('auth.passwordNotMatch'))
         }
         return Promise.resolve()
       },
       trigger: 'blur'
     }
   ]
-}
+}))
 
 // 发送验证码
 const handleSendCode = async () => {
@@ -232,15 +234,15 @@ const handleSendCode = async () => {
     })
 
     if (response.data.success) {
-      message.success(response.data.message || '验证码已发送')
+      message.success(response.data.message || t('forgotPassword.codeSent'))
       currentStep.value = 1
       startCountdown()
     } else {
-      message.error(response.data.message || '发送失败')
+      message.error(response.data.message || t('messages.operationFailed'))
     }
   } catch (error) {
-    console.error('发送验证码失败:', error)
-    message.error(error.response?.data?.message || '发送验证码失败,请稍后重试')
+    console.error('Send code error:', error)
+    message.error(error.response?.data?.message || t('messages.operationFailed'))
   } finally {
     loading.value = false
   }
@@ -256,14 +258,14 @@ const handleVerifyCode = async () => {
     })
 
     if (response.data.success) {
-      message.success('验证成功')
+      message.success(t('forgotPassword.verificationSuccess'))
       currentStep.value = 2
     } else {
-      message.error(response.data.message || '验证码错误')
+      message.error(response.data.message || t('messages.operationFailed'))
     }
   } catch (error) {
-    console.error('验证失败:', error)
-    message.error(error.response?.data?.message || '验证失败,请重试')
+    console.error('Verify code error:', error)
+    message.error(error.response?.data?.message || t('messages.operationFailed'))
   } finally {
     loading.value = false
   }
@@ -280,16 +282,16 @@ const handleResetPassword = async () => {
     })
 
     if (response.data.success) {
-      message.success('密码重置成功,请使用新密码登录')
+      message.success(t('forgotPassword.resetSuccess'))
       setTimeout(() => {
         router.push('/login')
       }, 1500)
     } else {
-      message.error(response.data.message || '密码重置失败')
+      message.error(response.data.message || t('messages.operationFailed'))
     }
   } catch (error) {
-    console.error('重置密码失败:', error)
-    message.error(error.response?.data?.message || '密码重置失败,请重试')
+    console.error('Reset password error:', error)
+    message.error(error.response?.data?.message || t('messages.operationFailed'))
   } finally {
     loading.value = false
   }

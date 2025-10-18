@@ -4,17 +4,17 @@
 
     <a-layout-content style="padding: 96px 24px 24px;">
       <div style="max-width: 1200px; margin: 0 auto;">
-        <a-button type="link" @click="goBack" style="padding-left: 0">← Back</a-button>
+        <a-button type="link" @click="goBack" style="padding-left: 0">← {{ $t('common.back') }}</a-button>
 
-        <div v-if="loading">Loading...</div>
-        <div v-if="error">Error: {{ error }}</div>
+        <div v-if="loading">{{ $t('common.loading') }}</div>
+        <div v-if="error">{{ $t('common.error') }}: {{ error }}</div>
 
         <a-row v-if="stall" :gutter="[24,24]">
           <!-- Left: Photos & Info -->
           <a-col :xs="24" :lg="14">
             <a-card :style="cardStyle" :body-style="{ padding: '16px' }">
               <template #title>
-                <a-tag color="blue-inverse">PHOTOS & INFO</a-tag>
+                <a-tag color="blue-inverse">{{ $t('stall.photosAndInfo').toUpperCase() }}</a-tag>
               </template>
 
               <div
@@ -58,14 +58,14 @@
                   <a-space>
                     <!-- Real rating and review count -->
                     <a-typography-text strong style="color:#f7931e">
-                      {{ stall.averageRating ? stall.averageRating.toFixed(1) : 'No rating yet' }}
+                      {{ stall.averageRating ? stall.averageRating.toFixed(1) : $t('stall.noRating') }}
                     </a-typography-text>
                     <a-typography-text type="secondary">
-                      · {{ stall.reviewCount || 0 }} reviews
+                      · {{ stall.reviewCount || 0 }} {{ $t('stall.reviews') }}
                     </a-typography-text>
                   </a-space>
                   <a-typography-text type="secondary">
-                    Average price: {{ stall.averagePrice && stall.averagePrice > 0 ? `~$${stall.averagePrice.toFixed(2)} per person` : 'No price info yet' }}
+                    {{ $t('stall.averagePrice') }}: {{ stall.averagePrice && stall.averagePrice > 0 ? `~$${stall.averagePrice.toFixed(2)} ${$t('stall.perPerson')}` : $t('stall.noPriceInfo') }}
                   </a-typography-text>
                 </a-space>
               </div>
@@ -74,7 +74,7 @@
             <a-card :style="cardStyle" style="margin-top: 16px;" :body-style="{ padding: '16px' }">
               <template #title>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <a-typography-title :level="5" style="margin:0">Photos from Customers</a-typography-title>
+                  <a-typography-title :level="5" style="margin:0">{{ $t('stall.photosFromCustomers') }}</a-typography-title>
                   <a-button
                     v-if="isAuthenticated"
                     type="primary"
@@ -82,7 +82,7 @@
                     @click="showUploadDialog"
                   >
                     <template #icon><UploadOutlined /></template>
-                    Upload Photos
+                    {{ $t('stall.uploadPhotos') }}
                   </a-button>
                 </div>
               </template>
@@ -94,14 +94,14 @@
                 :max-display="6"
                 show-load-more
                 use-thumbnail
-                empty-text="There are no photos yet, please share the first one!"
+                :empty-text="$t('stall.noPhotos')"
               />
             </a-card>
 
             <a-card :style="cardStyle" style="margin-top: 16px;" :body-style="{ padding: '16px' }">
               <template #title>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <a-typography-title :level="5" style="margin:0">Menu</a-typography-title>
+                  <a-typography-title :level="5" style="margin:0">{{ $t('stall.menu') }}</a-typography-title>
                   <a-button
                     v-if="isAuthenticated"
                     type="primary"
@@ -109,7 +109,7 @@
                     @click="showMenuUploadDialog"
                   >
                     <template #icon><UploadOutlined /></template>
-                    Upload Menu
+                    {{ $t('stall.uploadMenu') }}
                   </a-button>
                 </div>
               </template>
@@ -121,7 +121,7 @@
                 :max-display="6"
                 show-load-more
                 use-thumbnail
-                empty-text="There is no menu picture yet, please share the first one!"
+                :empty-text="$t('stall.noMenuPhotos')"
               />
             </a-card>
           </a-col>
@@ -130,14 +130,14 @@
           <a-col :xs="24" :lg="10">
             <a-card :style="cardStyle" :body-style="{ padding: '16px' }">
               <template #title>
-                <a-tag color="purple-inverse">LOCATION</a-tag>
+                <a-tag color="purple-inverse">{{ $t('stall.location').toUpperCase() }}</a-tag>
               </template>
 
               <div v-if="locationInfo">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                   <a-typography-text> {{ locationInfo.name }} </a-typography-text>
                   <a-button type="primary" @click="openNavigation" size="small" style="border-radius: 6px;">
-                    🧭 Navigate
+                    🧭 {{ $t('stall.navigate') }}
                   </a-button>
                 </div>
                 <MapSection :markers="[locationInfo.marker]" height="200px" />
@@ -145,9 +145,9 @@
 
               <!-- No location info -->
               <div v-else>
-                <a-empty description="Location information not available" :image="null">
+                <a-empty :description="$t('stall.locationNotAvailable')" :image="null">
                   <template #description>
-                    <a-typography-text type="secondary">No location data for this stall yet</a-typography-text>
+                    <a-typography-text type="secondary">{{ $t('stall.noLocationData') }}</a-typography-text>
                   </template>
                 </a-empty>
               </div>
@@ -158,7 +158,7 @@
               <template #title>
                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                   <div style="display: flex; align-items: center; gap: 8px;">
-                    <a-tag color="orange-inverse">REVIEWS</a-tag>
+                    <a-tag color="orange-inverse">{{ $t('stall.reviews').toUpperCase() }}</a-tag>
                     <span v-if="reviewListRef?.total > 0" style="color: #64748b; font-size: 14px; font-weight: normal;">
                       ({{ reviewListRef?.total }})
                     </span>
@@ -170,7 +170,7 @@
                       size="small"
                       @click="viewAllReviews"
                     >
-                      查看全部
+                      {{ $t('common.viewAll') }}
                     </a-button>
                     <a-button
                       v-if="isAuthenticated"
@@ -179,7 +179,7 @@
                       @click="handleWriteReview"
                     >
                       <template #icon><EditOutlined /></template>
-                      Write Review
+                      {{ $t('stall.writeReview') }}
                     </a-button>
                   </a-space>
                 </div>
@@ -205,22 +205,22 @@
     <!-- Stall Image Upload Dialog -->
     <ImageUploadDialog
       v-model:open="uploadDialogVisible"
-      title="Upload Stall Photos"
+      :title="$t('stall.uploadStallPhotos')"
       :max-count="9"
-      main-text="Click or drag to upload photos"
-      sub-text="Supports JPG, PNG, GIF, WebP formats, up to 9 images"
-      tip="Tip: Images will be automatically compressed and optimized. You can preview and delete them before uploading."
+      :main-text="$t('stall.uploadPhotosDrag')"
+      :sub-text="$t('stall.uploadPhotosFormat')"
+      :tip="$t('stall.uploadPhotosTip')"
       @confirm="handleUploadConfirm"
     />
 
     <!-- Menu Image Upload Dialog -->
     <ImageUploadDialog
       v-model:open="menuUploadDialogVisible"
-      title="Upload Menu Photos"
+      :title="$t('stall.uploadMenuPhotos')"
       :max-count="9"
-      main-text="Click or drag to upload menu photos"
-      sub-text="Supports JPG, PNG, GIF, WebP formats, up to 9 images"
-      tip="Tip: Images will be automatically compressed and optimized. You can preview and delete them before uploading."
+      :main-text="$t('stall.uploadMenuDrag')"
+      :sub-text="$t('stall.uploadPhotosFormat')"
+      :tip="$t('stall.uploadPhotosTip')"
       @confirm="handleMenuUploadConfirm"
     />
   </a-layout>
@@ -233,6 +233,7 @@ import { useStallStore } from '@/stores/stall'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { UploadOutlined, EditOutlined } from '@ant-design/icons-vue'
 import Header from '@/components/Header.vue'
 import ReviewList from '@/components/ReviewList.vue'
@@ -247,6 +248,7 @@ const route = useRoute()
 const router = useRouter()
 const stallStore = useStallStore()
 const userStore = useUserStore()
+const { t } = useI18n()
 const { currentStall: stall, loading, error } = storeToRefs(stallStore)
 const { userId, isAuthenticated } = storeToRefs(userStore)
 
@@ -342,7 +344,7 @@ const goBack = () => router.back()
 // Favorite function
 const toggleFavorite = async () => {
   if (!isAuthenticated.value || !userId.value) {
-    message.warning('Please login to add favorites')
+    message.warning(t('messages.pleaseLogin'))
     router.push('/login')
     return
   }
@@ -350,15 +352,15 @@ const toggleFavorite = async () => {
   try {
     if (isFavorite.value) {
       await favoriteService.removeFavorite(userId.value, route.params.id)
-      message.success('Removed from favorites')
+      message.success(t('stall.unfavoriteSuccess'))
       isFavorite.value = false
     } else {
       await favoriteService.addFavorite(userId.value, route.params.id)
-      message.success('Added to favorites')
+      message.success(t('stall.favoriteSuccess'))
       isFavorite.value = true
     }
   } catch (error) {
-    message.error('Failed to update favorite status')
+    message.error(t('stall.favoriteUpdateFailed'))
     console.error(error)
   }
 }
@@ -382,11 +384,11 @@ const handleUploadConfirm = async (result) => {
       result.thumbnailUrls,
       'PHOTO'
     )
-    message.success('Images have been successfully linked to the stall!')
+    message.success(t('stall.uploadPhotosSuccess'))
     await stallStore.fetchStallById(route.params.id)
   } catch (error) {
     console.error('Failed to link images:', error)
-    message.error('Failed to link images, please try again')
+    message.error(t('stall.uploadPhotosFailed'))
   }
 }
 
@@ -398,11 +400,11 @@ const handleMenuUploadConfirm = async (result) => {
       result.imageUrls,
       result.thumbnailUrls
     )
-    message.success('Menu images have been successfully linked to the stall!')
+    message.success(t('stall.uploadMenuSuccess'))
     await stallStore.fetchStallById(route.params.id)
   } catch (error) {
     console.error('Failed to link menu images:', error)
-    message.error('Failed to link menu images, please try again')
+    message.error(t('stall.uploadMenuFailed'))
   }
 }
 

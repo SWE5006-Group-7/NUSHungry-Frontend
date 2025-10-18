@@ -15,8 +15,8 @@
           </a-button>
           <CommentOutlined class="page-icon" />
           <div>
-            <h1 class="page-title">我的评价</h1>
-            <p class="page-subtitle">共 {{ total }} 条评价</p>
+            <h1 class="page-title">{{ $t('review.myReviews') }}</h1>
+            <p class="page-subtitle">{{ $t('review.totalReviews', { count: total }) }}</p>
           </div>
         </div>
       </div>
@@ -26,12 +26,12 @@
         <a-spin :spinning="loading">
           <!-- 空状态 -->
           <div v-if="!loading && reviews.length === 0" class="empty-state">
-            <a-empty description="暂无评价">
+            <a-empty :description="$t('profile.noReviews')">
               <template #image>
                 <CommentOutlined style="font-size: 64px; color: #d9d9d9;" />
               </template>
               <a-button type="primary" @click="$router.push('/')">
-                去逛逛
+                {{ $t('favorites.goExplore') }}
               </a-button>
             </a-empty>
           </div>
@@ -57,7 +57,7 @@
               @click="loadMore"
               :loading="loadingMore"
             >
-              加载更多
+              {{ $t('common.loadMore') }}
             </a-button>
           </div>
         </a-spin>
@@ -67,7 +67,7 @@
     <!-- 评价表单弹窗 -->
     <a-modal
       v-model:open="showFormModal"
-      title="编辑评价"
+      :title="$t('review.editReview')"
       :footer="null"
       width="700px"
       :destroyOnClose="true"
@@ -87,6 +87,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   ArrowLeftOutlined,
   CommentOutlined
@@ -99,6 +100,7 @@ import ReviewForm from '@/components/ReviewForm.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const reviews = ref([])
 const loading = ref(false)
@@ -115,7 +117,7 @@ const hasMore = computed(() => reviews.value.length < total.value)
 const loadReviews = async (append = false) => {
   try {
     if (!userStore.user?.id) {
-      message.error('请先登录')
+      message.error(t('messages.pleaseLogin'))
       router.push('/login')
       return
     }
@@ -160,8 +162,8 @@ const loadReviews = async (append = false) => {
     total.value = totalCount
 
   } catch (error) {
-    console.error('加载评价失败:', error)
-    message.error('加载评价失败')
+    console.error('Load reviews error:', error)
+    message.error(t('profile.loadReviewsFailed'))
   } finally {
     loading.value = false
     loadingMore.value = false
@@ -197,7 +199,7 @@ const handleFormSuccess = (review) => {
   }
 
   editingReview.value = null
-  message.success('评价更新成功')
+  message.success(t('review.updateSuccess'))
 }
 
 onMounted(() => {

@@ -1,16 +1,16 @@
 <template>
   <div class="login-container">
-    <a-card class="login-card" title="登录 NUSHungry">
+    <a-card class="login-card" :title="$t('auth.loginTitle')">
       <a-form
         :model="formState"
         :rules="rules"
         @finish="handleLogin"
         layout="vertical"
       >
-        <a-form-item label="用户名" name="username">
+        <a-form-item :label="$t('auth.username')" name="username">
           <a-input
             v-model:value="formState.username"
-            placeholder="请输入用户名"
+            :placeholder="$t('auth.usernamePlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -19,10 +19,10 @@
           </a-input>
         </a-form-item>
 
-        <a-form-item label="密码" name="password">
+        <a-form-item :label="$t('auth.password')" name="password">
           <a-input-password
             v-model:value="formState.password"
-            placeholder="请输入密码"
+            :placeholder="$t('auth.passwordPlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -30,7 +30,7 @@
             </template>
           </a-input-password>
           <div style="text-align: right; margin-top: 8px;">
-            <a @click="goToForgotPassword" style="font-size: 14px;">忘记密码?</a>
+            <a @click="goToForgotPassword" style="font-size: 14px;">{{ $t('auth.forgotPassword') }}</a>
           </div>
         </a-form-item>
 
@@ -42,14 +42,14 @@
             block
             :loading="loading"
           >
-            登录
+            {{ $t('common.login') }}
           </a-button>
         </a-form-item>
 
         <a-form-item>
           <div class="login-footer">
-            <span>还没有账号?</span>
-            <a @click="goToRegister">立即注册</a>
+            <span>{{ $t('auth.noAccount') }}</span>
+            <a @click="goToRegister">{{ $t('auth.registerNow') }}</a>
           </div>
         </a-form-item>
       </a-form>
@@ -58,8 +58,9 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
@@ -67,22 +68,23 @@ import { useUserStore } from '@/stores/user'
 const router = useRouter()
 const userStore = useUserStore()
 const loading = ref(false)
+const { t } = useI18n()
 
 const formState = reactive({
   username: '',
   password: ''
 })
 
-const rules = {
+const rules = computed(() => ({
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, message: '用户名至少3个字符', trigger: 'blur' }
+    { required: true, message: t('auth.usernameRequired'), trigger: 'blur' },
+    { min: 3, message: t('auth.usernameMinLength'), trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码至少6个字符', trigger: 'blur' }
+    { required: true, message: t('auth.passwordRequired'), trigger: 'blur' },
+    { min: 6, message: t('auth.passwordMinLength'), trigger: 'blur' }
   ]
-}
+}))
 
 const handleLogin = async () => {
   try {
@@ -93,15 +95,15 @@ const handleLogin = async () => {
     })
 
     if (result.success) {
-      message.success('登录成功!')
+      message.success(t('auth.loginSuccess'))
       // 跳转到首页或之前的页面
       const redirect = router.currentRoute.value.query.redirect || '/'
       router.push(redirect)
     } else {
-      message.error(result.message || '登录失败')
+      message.error(result.message || t('auth.loginFailed'))
     }
   } catch (error) {
-    message.error('登录失败,请稍后重试')
+    message.error(t('auth.loginFailed'))
     console.error('Login error:', error)
   } finally {
     loading.value = false

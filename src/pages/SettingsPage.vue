@@ -6,7 +6,7 @@
       <div class="back-button-container">
         <a-button type="text" size="large" @click="goBack" class="back-btn">
           <LeftOutlined />
-          <span>返回</span>
+          <span>{{ $t('common.back') }}</span>
         </a-button>
       </div>
 
@@ -14,9 +14,9 @@
       <div class="page-header">
         <h1 class="page-title">
           <SettingOutlined class="title-icon" />
-          设置
+          {{ $t('settings.title') }}
         </h1>
-        <p class="page-description">管理您的账户设置和偏好</p>
+        <p class="page-description">{{ $t('settings.description') }}</p>
       </div>
 
       <!-- 设置卡片 -->
@@ -26,7 +26,7 @@
           <template #title>
             <div class="card-title">
               <UserOutlined class="card-icon" />
-              <span>头像设置</span>
+              <span>{{ $t('settings.avatarSettings') }}</span>
             </div>
           </template>
           <div class="avatar-section">
@@ -49,10 +49,10 @@
               >
                 <a-button type="primary" size="large">
                   <UploadOutlined />
-                  选择头像
+                  {{ $t('settings.uploadAvatar') }}
                 </a-button>
               </a-upload>
-              <p class="upload-tip">支持 JPG、PNG 格式，文件大小不超过 10MB</p>
+              <p class="upload-tip">{{ $t('settings.uploadTip') }}</p>
             </div>
           </div>
         </a-card>
@@ -62,7 +62,7 @@
           <template #title>
             <div class="card-title">
               <UserOutlined class="card-icon" />
-              <span>个人信息</span>
+              <span>{{ $t('settings.personalInfo') }}</span>
             </div>
           </template>
           <a-form
@@ -71,10 +71,10 @@
             layout="vertical"
             @finish="handleUpdateProfile"
           >
-            <a-form-item label="用户名" name="username">
+            <a-form-item :label="$t('auth.username')" name="username">
               <a-input
                 v-model:value="profileForm.username"
-                placeholder="用户名"
+                :placeholder="$t('auth.username')"
                 disabled
                 size="large"
               >
@@ -84,10 +84,10 @@
               </a-input>
             </a-form-item>
 
-            <a-form-item label="邮箱" name="email">
+            <a-form-item :label="$t('auth.email')" name="email">
               <a-input
                 v-model:value="profileForm.email"
-                placeholder="邮箱"
+                :placeholder="$t('auth.email')"
                 size="large"
                 type="email"
               >
@@ -105,7 +105,7 @@
                 :loading="loadingProfile"
                 block
               >
-                保存修改
+                {{ $t('common.save') }}
               </a-button>
             </a-form-item>
           </a-form>
@@ -116,7 +116,7 @@
           <template #title>
             <div class="card-title">
               <LockOutlined class="card-icon" />
-              <span>修改密码</span>
+              <span>{{ $t('settings.changePassword') }}</span>
             </div>
           </template>
           <a-form
@@ -125,10 +125,10 @@
             layout="vertical"
             @finish="handleChangePassword"
           >
-            <a-form-item label="当前密码" name="currentPassword">
+            <a-form-item :label="$t('settings.currentPassword')" name="currentPassword">
               <a-input-password
                 v-model:value="passwordForm.currentPassword"
-                placeholder="请输入当前密码"
+                :placeholder="$t('settings.currentPasswordPlaceholder')"
                 size="large"
               >
                 <template #prefix>
@@ -137,10 +137,10 @@
               </a-input-password>
             </a-form-item>
 
-            <a-form-item label="新密码" name="newPassword">
+            <a-form-item :label="$t('settings.newPassword')" name="newPassword">
               <a-input-password
                 v-model:value="passwordForm.newPassword"
-                placeholder="请输入新密码 (至少6个字符)"
+                :placeholder="$t('settings.newPasswordPlaceholder')"
                 size="large"
               >
                 <template #prefix>
@@ -149,10 +149,10 @@
               </a-input-password>
             </a-form-item>
 
-            <a-form-item label="确认新密码" name="confirmPassword">
+            <a-form-item :label="$t('settings.confirmNewPassword')" name="confirmPassword">
               <a-input-password
                 v-model:value="passwordForm.confirmPassword"
-                placeholder="请再次输入新密码"
+                :placeholder="$t('settings.confirmNewPasswordPlaceholder')"
                 size="large"
               >
                 <template #prefix>
@@ -169,7 +169,7 @@
                 :loading="loadingPassword"
                 block
               >
-                修改密码
+                {{ $t('settings.changePassword') }}
               </a-button>
             </a-form-item>
           </a-form>
@@ -180,13 +180,13 @@
           <template #title>
             <div class="card-title">
               <LogoutOutlined class="card-icon" />
-              <span>账户管理</span>
+              <span>{{ $t('settings.accountManagement') }}</span>
             </div>
           </template>
           <div class="account-section">
             <div class="logout-info">
-              <p class="logout-title">退出登录</p>
-              <p class="logout-description">退出登录后，您将返回到登录页面</p>
+              <p class="logout-title">{{ $t('settings.logoutTitle') }}</p>
+              <p class="logout-description">{{ $t('settings.logoutDescription') }}</p>
             </div>
             <a-button
               type="primary"
@@ -196,7 +196,7 @@
               block
             >
               <LogoutOutlined />
-              退出登录
+              {{ $t('common.logout') }}
             </a-button>
           </div>
         </a-card>
@@ -213,9 +213,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   UserOutlined,
   MailOutlined,
@@ -233,6 +234,7 @@ import { getResourceUrl } from '@/utils/config'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const activeTab = ref('profile')
 const loadingProfile = ref(false)
@@ -255,21 +257,21 @@ const passwordForm = reactive({
 })
 
 // 个人信息验证规则
-const profileRules = {
+const profileRules = computed(() => ({
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+    { required: true, message: t('auth.emailRequired'), trigger: 'blur' },
+    { type: 'email', message: t('auth.emailInvalid'), trigger: 'blur' }
   ]
-}
+}))
 
 // 密码验证
 const validateNewPassword = (rule, value) => {
   if (value === '') {
-    return Promise.reject('请输入新密码')
+    return Promise.reject(t('auth.passwordRequired'))
   } else if (value.length < 6) {
-    return Promise.reject('密码至少6个字符')
+    return Promise.reject(t('auth.passwordMinLength'))
   } else if (value === passwordForm.currentPassword) {
-    return Promise.reject('新密码不能与当前密码相同')
+    return Promise.reject(t('settings.passwordNotSame'))
   } else {
     return Promise.resolve()
   }
@@ -277,18 +279,18 @@ const validateNewPassword = (rule, value) => {
 
 const validateConfirmPassword = (rule, value) => {
   if (value === '') {
-    return Promise.reject('请确认新密码')
+    return Promise.reject(t('auth.confirmPasswordRequired'))
   } else if (value !== passwordForm.newPassword) {
-    return Promise.reject('两次输入的密码不一致')
+    return Promise.reject(t('auth.passwordNotMatch'))
   } else {
     return Promise.resolve()
   }
 }
 
 // 密码验证规则
-const passwordRules = {
+const passwordRules = computed(() => ({
   currentPassword: [
-    { required: true, message: '请输入当前密码', trigger: 'blur' }
+    { required: true, message: t('auth.passwordRequired'), trigger: 'blur' }
   ],
   newPassword: [
     { required: true, validator: validateNewPassword, trigger: 'blur' }
@@ -296,7 +298,7 @@ const passwordRules = {
   confirmPassword: [
     { required: true, validator: validateConfirmPassword, trigger: 'blur' }
   ]
-}
+}))
 
 // 加载用户信息
 const loadUserProfile = () => {
@@ -316,12 +318,12 @@ const handleUpdateProfile = async () => {
     })
 
     if (result.success) {
-      message.success('个人信息更新成功!')
+      message.success(t('settings.profileUpdateSuccess'))
     } else {
-      message.error(result.message || '更新失败')
+      message.error(result.message || t('settings.profileUpdateFailed'))
     }
   } catch (error) {
-    message.error('更新失败,请稍后重试')
+    message.error(t('settings.profileUpdateFailed'))
     console.error('Update profile error:', error)
   } finally {
     loadingProfile.value = false
@@ -338,16 +340,16 @@ const handleChangePassword = async () => {
     })
 
     if (result.success) {
-      message.success('密码修改成功!')
+      message.success(t('settings.passwordUpdateSuccess'))
       // 清空表单
       passwordForm.currentPassword = ''
       passwordForm.newPassword = ''
       passwordForm.confirmPassword = ''
     } else {
-      message.error(result.message || '密码修改失败')
+      message.error(result.message || t('settings.passwordUpdateFailed'))
     }
   } catch (error) {
-    message.error('密码修改失败,请稍后重试')
+    message.error(t('settings.passwordUpdateFailed'))
     console.error('Change password error:', error)
   } finally {
     loadingPassword.value = false
@@ -357,7 +359,7 @@ const handleChangePassword = async () => {
 // 退出登录
 const handleLogout = () => {
   userStore.logout()
-  message.success('已退出登录')
+  message.success(t('auth.logoutSuccess'))
   router.push('/login')
 }
 
@@ -366,14 +368,14 @@ const handleBeforeUpload = (file) => {
   // 检查文件类型
   const isImage = file.type.startsWith('image/')
   if (!isImage) {
-    message.error('只能上传图片文件!')
+    message.error(t('settings.onlyImage'))
     return false
   }
 
   // 检查文件大小 (10MB)
   const isLt10M = file.size / 1024 / 1024 < 10
   if (!isLt10M) {
-    message.error('图片大小不能超过 10MB!')
+    message.error(t('settings.imageSizeLimit'))
     return false
   }
 
@@ -394,7 +396,7 @@ const handleAvatarSuccess = (newAvatarUrl) => {
     userStore.user.avatarUrl = newAvatarUrl
   }
 
-  message.success('头像更新成功!')
+  message.success(t('settings.avatarUploadSuccess'))
 }
 
 // 返回上一页

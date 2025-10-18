@@ -9,31 +9,31 @@
       >
         <!-- 评分选择 -->
         <a-form-item
-          label="评分"
+          :label="$t('review.rating')"
           name="rating"
-          :rules="[{ required: true, message: '请选择评分' }]"
+          :rules="[{ required: true, message: $t('review.ratingPlaceholder') }]"
         >
           <div class="rating-section">
             <a-rate v-model:value="formState.rating" :style="{ fontSize: '28px' }" allow-half />
             <span v-if="formState.rating" class="rating-text">
-              {{ formState.rating }} 星
+              {{ formState.rating }} {{ $t('review.stars') }}
             </span>
           </div>
         </a-form-item>
 
         <!-- 评价内容 -->
         <a-form-item
-          label="评价内容"
+          :label="$t('review.comment')"
           name="comment"
           :rules="[
-            { required: true, message: '请输入评价内容' },
-            { min: 1, message: '评价内容至少1个字符' },
-            { max: 1000, message: '评价内容不能超过1000个字符' }
+            { required: true, message: $t('review.commentRequired') },
+            { min: 1, message: $t('review.commentMinLength') },
+            { max: 1000, message: $t('review.commentMaxLength') }
           ]"
         >
           <a-textarea
             v-model:value="formState.comment"
-            placeholder="分享您的用餐体验..."
+            :placeholder="$t('review.commentPlaceholder')"
             :rows="6"
             :maxlength="1000"
             :showCount="true"
@@ -41,21 +41,21 @@
         </a-form-item>
 
         <!-- 花费信息（可选） -->
-        <a-form-item label="消费信息（可选）">
+        <a-form-item :label="$t('review.costInfo')">
           <a-space direction="vertical" style="width: 100%;">
             <div class="cost-info-section">
               <a-row :gutter="16">
                 <a-col :span="12">
                   <a-form-item
-                    label="总花费 ($)"
+                    :label="$t('review.totalCost')"
                     name="totalCost"
                     :rules="[
-                      { type: 'number', min: 0.01, message: '总花费必须大于0' }
+                      { type: 'number', min: 0.01, message: $t('review.totalCostMin') }
                     ]"
                   >
                     <a-input-number
                       v-model:value="formState.totalCost"
-                      placeholder="例如: 15.50"
+                      :placeholder="$t('review.totalCostPlaceholder')"
                       :min="0.01"
                       :step="0.5"
                       :precision="2"
@@ -65,15 +65,15 @@
                 </a-col>
                 <a-col :span="12">
                   <a-form-item
-                    label="用餐人数"
+                    :label="$t('review.numberOfPeople')"
                     name="numberOfPeople"
                     :rules="[
-                      { type: 'number', min: 1, message: '用餐人数至少为1人' }
+                      { type: 'number', min: 1, message: $t('review.numberOfPeopleMin') }
                     ]"
                   >
                     <a-input-number
                       v-model:value="formState.numberOfPeople"
-                      placeholder="例如: 2"
+                      :placeholder="$t('review.numberOfPeoplePlaceholder')"
                       :min="1"
                       :step="1"
                       style="width: 100%;"
@@ -84,13 +84,13 @@
             </div>
             <div class="upload-tips">
               <InfoCircleOutlined />
-              填写消费信息可以帮助其他用户了解人均价格
+              {{ $t('review.costInfoTip') }}
             </div>
           </a-space>
         </a-form-item>
 
         <!-- 图片上传 -->
-        <a-form-item label="上传图片（可选）">
+        <a-form-item :label="$t('review.uploadImages') + ' (可选)'">
           <ImageUpload
             v-model="formState.imageUrls"
             :max-count="9"
@@ -99,7 +99,7 @@
           />
           <div class="upload-tips">
             <InfoCircleOutlined />
-            最多可上传9张图片，每张不超过5MB
+            {{ $t('review.uploadImagesTip') }}
           </div>
         </a-form-item>
 
@@ -107,9 +107,9 @@
         <a-form-item>
           <a-space>
             <a-button type="primary" html-type="submit" :loading="submitting">
-              {{ editMode ? '更新评价' : '提交评价' }}
+              {{ editMode ? $t('review.updateReview') : $t('review.submitReview') }}
             </a-button>
-            <a-button @click="handleCancel">取消</a-button>
+            <a-button @click="handleCancel">{{ $t('common.cancel') }}</a-button>
           </a-space>
         </a-form-item>
       </a-form>
@@ -120,6 +120,7 @@
 <script setup>
 import { reactive, ref, watch } from 'vue';
 import { message } from 'ant-design-vue';
+import { useI18n } from 'vue-i18n';
 import { InfoCircleOutlined } from '@ant-design/icons-vue';
 import ImageUpload from './ImageUpload.vue';
 import reviewService from '../services/reviewService';
@@ -136,6 +137,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['success', 'cancel']);
+const { t } = useI18n();
 
 const editMode = ref(!!props.editReview);
 const submitting = ref(false);
@@ -178,11 +180,11 @@ const handleSubmit = async () => {
       });
 
       if (response.success) {
-        message.success('评价更新成功');
+        message.success(t('review.updateSuccess'));
         emit('success', response.data);
         resetForm();
       } else {
-        message.error(response.message || '更新失败');
+        message.error(response.message || t('review.updateFailed'));
       }
     } else {
       // 创建新评价
@@ -196,16 +198,16 @@ const handleSubmit = async () => {
       });
 
       if (response.success) {
-        message.success('评价提交成功');
+        message.success(t('review.submitSuccess'));
         emit('success', response.data);
         resetForm();
       } else {
-        message.error(response.message || '提交失败');
+        message.error(response.message || t('review.submitFailed'));
       }
     }
   } catch (error) {
-    console.error('提交评价失败:', error);
-    message.error(error.message || '操作失败，请稍后重试');
+    console.error('Submit review error:', error);
+    message.error(error.message || t('messages.operationFailed'));
   } finally {
     submitting.value = false;
   }

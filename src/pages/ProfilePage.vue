@@ -6,7 +6,7 @@
       <div class="back-button-container">
         <a-button type="text" size="large" @click="goBack" class="back-btn">
           <LeftOutlined />
-          <span>返回</span>
+          <span>{{ $t('profile.backButton') }}</span>
         </a-button>
       </div>
 
@@ -20,11 +20,11 @@
               </a-avatar>
             </div>
             <div class="user-details">
-              <h1 class="user-name">{{ userStore.username || '用户' }}</h1>
+              <h1 class="user-name">{{ userStore.username || $t('profile.user') }}</h1>
               <p class="user-email">{{ userStore.user?.email || '' }}</p>
             </div>
             <a-button type="primary" @click="goToSettings" class="settings-btn">
-              去设置
+              {{ $t('profile.goToSettings') }}
             </a-button>
           </div>
         </div>
@@ -39,20 +39,20 @@
             <div class="section-icon-box reviews-icon">
               <CommentOutlined class="section-icon" />
             </div>
-            <h2 class="section-title">我的评价</h2>
+            <h2 class="section-title">{{ $t('profile.myReviews') }}</h2>
             <a-button
               v-if="reviews.length > 0"
               type="link"
               @click="$router.push('/my-reviews')"
               class="view-all-btn"
             >
-              查看全部
+              {{ $t('profile.viewAll') }}
               <RightOutlined />
             </a-button>
           </div>
           <a-spin :spinning="loadingReviews">
             <div v-if="reviews.length === 0" class="empty-state">
-              <a-empty description="暂无评价">
+              <a-empty :description="$t('profile.noReviews')">
                 <template #image>
                   <CommentOutlined style="font-size: 48px; color: #d9d9d9;" />
                 </template>
@@ -85,7 +85,7 @@
                     class="delete-btn"
                   >
                     <DeleteOutlined />
-                    删除
+                    {{ $t('profile.deleteReview') }}
                   </a-button>
                 </div>
               </div>
@@ -99,20 +99,20 @@
             <div class="section-icon-box favorites-icon">
               <StarOutlined class="section-icon" />
             </div>
-            <h2 class="section-title">我的收藏</h2>
+            <h2 class="section-title">{{ $t('profile.myFavorites') }}</h2>
             <a-button
               v-if="favorites.length > 0"
               type="link"
               @click="$router.push('/favorites')"
               class="view-all-btn"
             >
-              查看全部
+              {{ $t('profile.viewAll') }}
               <RightOutlined />
             </a-button>
           </div>
           <a-spin :spinning="loadingFavorites">
             <div v-if="favorites.length === 0" class="empty-state">
-              <a-empty description="暂无收藏">
+              <a-empty :description="$t('profile.noFavorites')">
                 <template #image>
                   <StarOutlined style="font-size: 48px; color: #d9d9d9;" />
                 </template>
@@ -161,6 +161,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import {
   UserOutlined,
   ShopOutlined,
@@ -179,6 +180,7 @@ import Header from '@/components/Header.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const reviews = ref([])
 const favorites = ref([])
@@ -193,7 +195,7 @@ const loadReviews = async () => {
     const data = await authService.getUserReviews()
     reviews.value = data
   } catch (error) {
-    message.error('加载评价失败')
+    message.error(t('profile.loadReviewsFailed'))
     console.error('Load reviews error:', error)
   } finally {
     loadingReviews.value = false
@@ -218,7 +220,7 @@ const loadFavorites = async () => {
       cafeteriaName: fav.cafeteriaName
     }))
   } catch (error) {
-    message.error('加载收藏失败')
+    message.error(t('profile.loadFavoritesFailed'))
     console.error('Load favorites error:', error)
   } finally {
     loadingFavorites.value = false
@@ -228,27 +230,27 @@ const loadFavorites = async () => {
 // 删除评价
 const handleDeleteReview = async (reviewId) => {
   // TODO: 实现删除评价的API
-  message.warning('删除评价功能待实现')
+  message.warning(t('profile.deleteFailed'))
 }
 
 // 取消收藏
 const handleRemoveFavorite = async (favoriteId) => {
   Modal.confirm({
-    title: '确认取消收藏',
-    content: '确定要取消收藏这个摊位吗?',
-    okText: '确认',
+    title: t('profile.confirmRemoveFavorite'),
+    content: t('profile.confirmRemoveFavoriteContent'),
+    okText: t('common.confirm'),
     okType: 'danger',
-    cancelText: '取消',
+    cancelText: t('common.cancel'),
     onOk: async () => {
       try {
         const userId = userStore.user?.id
         if (!userId) return
 
         await favoriteService.removeFavoriteById(userId.toString(), favoriteId)
-        message.success('已取消收藏')
+        message.success(t('profile.removeFavoriteSuccess'))
         await loadFavorites()
       } catch (error) {
-        message.error('操作失败')
+        message.error(t('messages.operationFailed'))
         console.error('Remove favorite error:', error)
       }
     }
