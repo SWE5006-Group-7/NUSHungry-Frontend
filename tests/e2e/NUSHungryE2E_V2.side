@@ -1,0 +1,108 @@
+{
+  "id": "4dd1143c-5fae-420d-a7e6-4211c71a034f",
+  "version": "2.0",
+  "name": "NUSHungryE2E_V2",
+  "url": "http://localhost",
+  "tests": [{
+    "id": "ed15a447-4c81-46ed-8b07-d16b3ab98c70",
+    "name": "TestHomepage",
+    "commands": [{
+      "id": "9335f30d-5243-42b2-86d5-11650104406f",
+      "comment": "",
+      "command": "open",
+      "target": "/",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "d96295fb-48d5-4459-bf29-917ed526e588",
+      "comment": "",
+      "command": "setWindowSize",
+      "target": "1485x885",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "452b705f-a921-4652-b0c8-84f431c1d8f3",
+      "comment": "",
+      "command": "click",
+      "target": "css=.leaflet-host",
+      "targets": [
+        ["css=.leaflet-host", "css:finder"],
+        ["xpath=//div[@id='app']/section/main/div/div/div[2]/div/div/div", "xpath:idRelative"],
+        ["xpath=//main/div/div/div[2]/div/div/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "a9209496-f3b9-4aa9-b305-861aae4387c1",
+      "comment": "",
+      "command": "click",
+      "target": "css=.leaflet-host",
+      "targets": [
+        ["css=.leaflet-host", "css:finder"],
+        ["xpath=//div[@id='app']/section/main/div/div/div[2]/div/div/div", "xpath:idRelative"],
+        ["xpath=//main/div/div/div[2]/div/div/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "650577c2-4de3-42b8-a569-9fdf84ae6280",
+      "comment": "",
+      "command": "doubleClick",
+      "target": "css=.leaflet-host",
+      "targets": [
+        ["css=.leaflet-host", "css:finder"],
+        ["xpath=//div[@id='app']/section/main/div/div/div[2]/div/div/div", "xpath:idRelative"],
+        ["xpath=//main/div/div/div[2]/div/div/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "a9d0bbd4-36ab-4c00-8676-6eaffedd825d",
+      "comment": "",
+      "command": "click",
+      "target": "css=.leaflet-host",
+      "targets": [
+        ["css=.leaflet-host", "css:finder"],
+        ["xpath=//div[@id='app']/section/main/div/div/div[2]/div/div/div", "xpath:idRelative"],
+        ["xpath=//main/div/div/div[2]/div/div/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "295ca118-b764-4ab0-a76b-2cf703fedf07",
+      "comment": "",
+      "command": "assertElementPresent",
+      "target": "css=.leaflet-host",
+      "targets": [
+        ["css=.leaflet-host", "css:finder"],
+        ["xpath=//div[@id='app']/section/main/div/div/div[2]/div/div/div", "xpath:idRelative"],
+        ["xpath=//main/div/div/div[2]/div/div/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "04e74f0b-07ea-4076-bd5c-4880fcc5024b",
+      "comment": "",
+      "command": "assertElementPresent",
+      "target": "css=.ant-card:nth-child(2) > .ant-card-body > div:nth-child(1)",
+      "targets": [
+        ["css=.ant-card:nth-child(2) > .ant-card-body > div:nth-child(1)", "css:finder"],
+        ["xpath=//div[@id='app']/section/main/div/div/div[2]/div[2]/div/div", "xpath:idRelative"],
+        ["xpath=//div[2]/div[2]/div/div", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "aa54ca1f-2ece-41ff-8225-8d8a64606b81",
+      "comment": "",
+      "command": "assertTitle",
+      "target": "NUSHungry",
+      "targets": [],
+      "value": "NUSHungry"
+    }]
+  }],
+  "suites": [{
+    "id": "1b4d3be9-233a-4c93-9ef8-d7bd652e3b00",
+    "name": "Default Suite",
+    "persistSession": false,
+    "parallel": false,
+    "timeout": 300,
+    "tests": ["ed15a447-4c81-46ed-8b07-d16b3ab98c70"]
+  }],
+  "urls": ["http://nushungry-alb-903727427.ap-southeast-1.elb.amazonaws.com/"],
+  "plugins": []
+}
