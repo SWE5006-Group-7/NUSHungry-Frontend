@@ -26,4 +26,4 @@ jobs:
           echo "FIREFOX_VERSION=$FIREFOX_VER" >> $GITHUB_ENV
           echo "Firefox version: $FIREFOX_VER"
           npm install -g selenium-side-runner geckodriver
-          selenium-side-runner -c "browserName=MicrosoftEdge" tests/e2e/NUSHungryE2E_V2.side
+          selenium-side-runner -c "browserName=firefox" tests/e2e/NUSHungryE2E_V2.side
