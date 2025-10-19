@@ -26,4 +26,6 @@ jobs:
           echo "FIREFOX_VERSION=$FIREFOX_VER" >> $GITHUB_ENV
           echo "Firefox version: $FIREFOX_VER"
           npm install -g selenium-side-runner geckodriver
-          selenium-side-runner -c '{"browserName": "firefox", "moz:firefoxOptions": {"args": ["-headless"]}}' tests/e2e/NUSHungryE2E_V2.side
+          TMP_PROFILE_DIR=$(mktemp -d)
+          echo "Using temporary Firefox profile at: $TMP_PROFILE_DIR"
+          selenium-side-runner -c '{"browserName": "firefox", "moz:firefoxOptions": {"args": ["-headless","--user-data-dir=$TMP_PROFILE_DIR"]}}' tests/e2e/NUSHungryE2E_V2.side
