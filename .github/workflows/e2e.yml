@@ -14,18 +14,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Set up E2E test environment
-        env:
-          AWS_REGION: ap-southeast-1
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Selenium dependencies
         run: |
-          which firefox || echo "Firefox not found"
-          firefox --version || echo "Firefox command failed"
-          FIREFOX_VER=$(firefox --version 2>&1 | awk '{print $3}' || echo "unknown")
-          echo "FIREFOX_VERSION=$FIREFOX_VER" >> $GITHUB_ENV
-          echo "Firefox version: $FIREFOX_VER"
-          npm install -g selenium-side-runner geckodriver
-          TMP_PROFILE_DIR=$(mktemp -d)
-          echo "Using temporary Firefox profile at: $TMP_PROFILE_DIR"
-          selenium-side-runner -c '{"browserName": "firefox", "moz:firefoxOptions": {"args": ["-headless","--user-data-dir=$TMP_PROFILE_DIR"]}}' tests/e2e/NUSHungryE2E_V2.side
+          python -m pip install --upgrade pip
+          pip install selenium
+      - name: Set up E2E test environment
+        run: |
+          docker compose up
+          python tests/e2e/test.py
