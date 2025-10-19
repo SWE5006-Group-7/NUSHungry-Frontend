@@ -26,3 +26,5 @@ jobs:
         run: |
           docker compose up
           python tests/e2e/test.py
+      - name: Teardown
+        run: docker compose down
