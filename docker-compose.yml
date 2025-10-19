@@ -2,7 +2,6 @@ services:
   db:
     image: mysql:8.0
     container_name: mysql_db
-    platform: linux/amd64
     environment:
       MYSQL_DATABASE: nushungry_db
       MYSQL_ROOT_PASSWORD: password
@@ -15,7 +14,6 @@ services:
 
   backend:
     image: 012550706366.dkr.ecr.ap-southeast-1.amazonaws.com/nushungry/monolith-backend:latest
-    platform: linux/amd64
     container_name: backend_api
     depends_on:
       - db

@@ -105,7 +105,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Authenticate Docker CLI to AWS ECR
+      - name: Set up E2E test environment
         env:
           AWS_REGION: ap-southeast-1
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -113,8 +113,8 @@ jobs:
         run: |
           npm install -g aws-cli
           aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin ${{ secrets.IMAGE_REGISTRY }}
-      - name: Pull and run backend and database containers
-        run: docker compose up
+          docker pull --platform linux/amd64 ${{ secrets.IMAGE_REGISTRY }}/monolith-backend:latest
+          docker compose up
       - name: Get latest Edge version
         shell: powershell
         run: |
