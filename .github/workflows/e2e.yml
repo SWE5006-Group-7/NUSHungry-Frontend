@@ -20,5 +20,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          echo "FIREFOX_VERSION=$(firefox -v)" >> $GITHUB_ENV
-          echo "Firefox version is $FIREFOX_VERSION"
+          which firefox || echo "Firefox not found"
+          firefox --version || echo "Firefox command failed"
+          FIREFOX_VER=$(firefox --version 2>&1 | awk '{print $3}' || echo "unknown")
+          echo "FIREFOX_VERSION=$FIREFOX_VER" >> $GITHUB_ENV
+          echo "Firefox version: $FIREFOX_VER"
