@@ -33,7 +33,21 @@ jobs:
           npm install -g aws-cli
           aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin ${{ secrets.IMAGE_REGISTRY }}
           docker pull ${{ secrets.IMAGE_REGISTRY }}/monolith-backend:latest
-          docker compose up
+          docker compose up -d
+
+          # Wait for services to be healthy
+          echo "Waiting for services to be ready..."
+          sleep 30
+
+          docker compose ps
+
+          # Wait for frontend to respond
+          timeout 60 bash -c 'until curl -s http://localhost:80 > /dev/null; do echo "Waiting for frontend..."; sleep 2; done'
+          echo "✓ Frontend is ready"
+
+          # Wait for Selenium Grid to be ready
+          timeout 60 bash -c 'until curl -s http://localhost:4444/wd/hub/status | grep -q "ready\":true"; do echo "Waiting for Selenium..."; sleep 2; done'
+          echo "✓ Selenium Grid is ready"
           python tests/e2e/test.py
       - name: Teardown
         run: docker compose down
