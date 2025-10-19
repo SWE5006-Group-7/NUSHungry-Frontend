@@ -44,10 +44,7 @@ jobs:
           # Wait for frontend to respond
           timeout 60 bash -c 'until curl -s http://localhost:80 > /dev/null; do echo "Waiting for frontend..."; sleep 2; done'
           echo "✓ Frontend is ready"
-
-          # Wait for Selenium Grid to be ready
-          timeout 60 bash -c 'until curl -s http://localhost:4444/wd/hub/status | grep -q "ready\":true"; do echo "Waiting for Selenium..."; sleep 2; done'
-          echo "✓ Selenium Grid is ready"
-          python tests/e2e/test.py
+      - name: Run E2E tests
+        run: python tests/e2e/test.py
       - name: Teardown
         run: docker compose down
