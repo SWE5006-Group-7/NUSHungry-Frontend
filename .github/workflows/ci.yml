@@ -114,7 +114,7 @@ jobs:
           npm install -g aws-cli
           aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin ${{ secrets.IMAGE_REGISTRY }}
       - name: Pull and run backend and database containers
-        run: docker-compose up
+        run: docker compose up
       - name: Get latest Edge version
         shell: powershell
         run: |
@@ -137,4 +137,4 @@ jobs:
         run: |
           npm install -g selenium-side-runner edgedriver
           npx edgedriver --version
-          selenium-side-runner -c "browserName=MicrosoftEdge" src/tests/e2e/NUSHungryE2E_V2.side
+          selenium-side-runner -c "browserName=MicrosoftEdge" tests/e2e/NUSHungryE2E_V2.side
