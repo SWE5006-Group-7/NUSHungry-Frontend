@@ -66,3 +66,21 @@ jobs:
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
+  performance-tests:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-docker-action@v4
+      - name: Performance test
+        run: |
+          docker run --workdir "/tests" --name test-jmeter -v "./tests/performance":/tests alpine/jmeter:5.6.3 -n -t "NUSHungrySmokeTest.jmx" -l "logs/results.jtl" -e -o "html"
+          docker rm -f test-jmeter
+
+      - name: Upload artefacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-test-results
+          path: /tests/performance/
+          retention-days: 7
