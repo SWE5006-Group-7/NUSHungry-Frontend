@@ -38,13 +38,6 @@ jobs:
         with:
           mask-password: "true"
 
-      - name: Package
-        uses: actions/setup-java@v5
-        with:
-          java-version: "17"
-          distribution: "temurin"
-          cache: maven
-
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
