@@ -2,9 +2,9 @@ name: CI Pipeline for NUSHungry Frontend
 
 on:
   push:
-    branches: ["feat/frontend-ci-pipeline"]
+    branches: ["main"]
   pull_request:
-    branches: ["feat/frontend-ci-pipeline"]
+    branches: ["main"]
 
 jobs:
   unit-tests:

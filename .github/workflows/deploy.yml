@@ -2,7 +2,9 @@ name: Deploy to Amazon ECS
 
 on:
   push:
-    branches: ["feat/frontend-ci-pipeline"]
+    branches: ["release"]
+  pull_request:
+    branches: ["release"]
 
 env:
   AWS_REGION: ap-southeast-1
