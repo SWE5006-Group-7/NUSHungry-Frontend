@@ -511,12 +511,12 @@ const fetchReviews = async () => {
       rating: reviewFilters.rating || undefined
     };
 
-    const response = await apiClient.get('/admin/reviews', { params });
+    const response = await apiClient.get('/reviews/admin', { params });
     reviews.value = response.data.content || [];
     reviewPagination.total = response.data.totalElements || 0;
 
     // 获取统计数据
-    const stats = await apiClient.get('/admin/reviews/stats');
+    const stats = await apiClient.get('/reviews/admin/stats');
     reviewStats.value = stats.data;
   } catch (error) {
     console.error('获取评价列表失败:', error);
@@ -603,7 +603,7 @@ const deleteReview = (record) => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        await apiClient.delete(`/admin/reviews/${record.id}`);
+        await apiClient.delete(`/reviews/${record.id}`);
         message.success('删除成功');
         fetchReviews();
       } catch (error) {

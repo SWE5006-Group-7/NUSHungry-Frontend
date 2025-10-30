@@ -23,7 +23,7 @@ export default {
     } = params
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/admin/reviews/pending`, {
+      const response = await axios.get(`${API_BASE_URL}/reviews/admin/pending`, {
         params: { page, size, sortBy, sortDirection }
       })
       return response.data
@@ -38,7 +38,7 @@ export default {
    */
   async getModerationStats() {
     try {
-      const response = await axios.get(`${API_BASE_URL}/admin/reviews/stats`)
+      const response = await axios.get(`${API_BASE_URL}/reviews/admin/stats`)
       return response.data
     } catch (error) {
       console.error('获取审核统计失败:', error)
@@ -56,7 +56,7 @@ export default {
   async moderateReview(reviewId, data) {
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/admin/reviews/${reviewId}/moderate`,
+        `${API_BASE_URL}/reviews/admin/${reviewId}/moderate`,
         data
       )
       return response.data
@@ -76,7 +76,7 @@ export default {
   async batchModerateReviews(data) {
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/admin/reviews/moderate/batch`,
+        `${API_BASE_URL}/reviews/admin/moderate/batch`,
         data
       )
       return response.data
@@ -96,7 +96,7 @@ export default {
     const { page = 0, size = 20 } = params
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/admin/reviews/logs`, {
+      const response = await axios.get(`${API_BASE_URL}/reviews/admin/logs`, {
         params: { page, size }
       })
       return response.data
@@ -113,7 +113,7 @@ export default {
   async getReviewModerationLogs(reviewId) {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/admin/reviews/${reviewId}/logs`
+        `${API_BASE_URL}/reviews/admin/${reviewId}/logs`
       )
       return response.data
     } catch (error) {
