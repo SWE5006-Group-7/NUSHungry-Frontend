@@ -1,10 +1,10 @@
 import request from '@/utils/request';
 
 const adminCafeteriaApi = {
-  // 获取食堂列表 (管理员)
+  // 获取食堂列表
   getCafeteriaList(params) {
     return request({
-      url: '/cafeterias/admin',
+      url: '/admin/cafeterias',
       method: 'get',
       params
     });
@@ -13,7 +13,7 @@ const adminCafeteriaApi = {
   // 获取食堂详情
   getCafeteriaDetail(id) {
     return request({
-      url: `/cafeterias/${id}`,
+      url: `/admin/cafeterias/${id}`,
       method: 'get'
     });
   },
@@ -21,7 +21,7 @@ const adminCafeteriaApi = {
   // 创建食堂
   createCafeteria(data) {
     return request({
-      url: '/cafeterias',
+      url: '/admin/cafeterias',
       method: 'post',
       data
     });
@@ -30,7 +30,7 @@ const adminCafeteriaApi = {
   // 更新食堂信息
   updateCafeteria(id, data) {
     return request({
-      url: `/cafeterias/${id}`,
+      url: `/admin/cafeterias/${id}`,
       method: 'put',
       data
     });
@@ -39,7 +39,7 @@ const adminCafeteriaApi = {
   // 删除食堂
   deleteCafeteria(id) {
     return request({
-      url: `/cafeterias/${id}`,
+      url: `/admin/cafeterias/${id}`,
       method: 'delete'
     });
   },
@@ -47,7 +47,7 @@ const adminCafeteriaApi = {
   // 更新食堂营业状态
   updateCafeteriaStatus(id, status) {
     return request({
-      url: `/cafeterias/${id}/status`,
+      url: `/admin/cafeterias/${id}/status`,
       method: 'put',
       data: { status }
     });
