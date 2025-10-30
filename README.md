@@ -1,43 +1,43 @@
 # NUSHungry Frontend
 
-[![React 18](https://img.shields.io/badge/react-18.2+-blue.svg)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/typescript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Vue 3](https://img.shields.io/badge/vue-3.5+-green.svg)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/vite-7.1+-yellow.svg)](https://vitejs.dev/)
 
-A modern React frontend application for the NUSHungry campus dining platform, built with cutting-edge web technologies and featuring a responsive, user-friendly interface.
+A modern Vue 3 frontend application for the NUSHungry campus dining platform, built with cutting-edge web technologies and featuring a responsive, user-friendly interface.
 
 ## System Architecture
 
-This application follows a **component-based architecture** with modern React patterns and clean separation of concerns:
+This application follows a **component-based architecture** with modern Vue 3 patterns and clean separation of concerns:
 
 ```mermaid
 graph TD
     subgraph "Presentation Layer"
-        A[React Components]
-        B[UI Components]
-        C[Layout Components]
+        A[Vue 3 Components]
+        B[Ant Design Vue]
+        C[Element Plus]
     end
 
     subgraph "State Management"
-        D[Redux Toolkit]
-        E[RTK Query]
-        F[Local State]
+        D[Pinia Stores]
+        E[Local State]
+        F[Reactive Data]
     end
 
     subgraph "Routing"
-        G[React Router]
-        H[Protected Routes]
-        I[Public Routes]
+        G[Vue Router]
+        H[Route Guards]
+        I[Admin Routes]
     end
 
     subgraph "Services"
-        J[API Client]
+        J[API Services]
         K[Auth Service]
-        L[Storage Service]
+        L[Upload Service]
     end
 
     subgraph "Utility"
-        M[UI Framework]
-        N[Form Validation]
+        M[Vue I18n]
+        N[Axios HTTP]
         O[Date Utils]
     end
 
@@ -55,15 +55,6 @@ graph TD
     L --> O
 ```
 
-### Architecture Highlights
-
-- **Component-Based Design**: Modular, reusable React components with clear separation
-- **State Management**: Redux Toolkit for global state, local state for component-specific data
-- **TypeScript**: Full type safety and improved developer experience
-- **Responsive Design**: Mobile-first approach with Tailwind CSS
-- **Modern Tooling**: Vite for fast development and optimized builds
-- **Progressive Web App**: PWA capabilities for enhanced mobile experience
-
 ##  Project Structure
 
 ```
@@ -71,87 +62,104 @@ nushungry-frontend/
 ├── package.json                     # Dependencies and scripts
 ├── README.md                        # This file
 ├── Dockerfile                       # Docker containerization
-├── vite.config.ts                   # Vite configuration
-├── tsconfig.json                    # TypeScript configuration
-├── tailwind.config.js               # Tailwind CSS configuration
-├── .github/workflows/               # CI/CD pipelines
-│   └── ci.yml                        # Continuous Integration
-├── public/                          # Static assets
-│   ├── index.html                   # HTML template
-│   └── favicon.ico                  # Favicon
+├── docker-compose.yml              # Docker compose configuration
+├── vite.config.js                   # Vite configuration
+├── vitest.config.js                 # Vitest testing configuration
+├── eslint.config.js                 # ESLint configuration
+├── index.html                       # HTML template
 ├── src/
-│   ├── main.tsx                     # Application entry point
-│   ├── App.tsx                      # Root component
-│   ├── components/                  # Reusable components
-│   │   ├── ui/                      # Base UI components
-│   │   │   ├── Button.tsx
-│   │   │   ├── Input.tsx
-│   │   │   ├── Modal.tsx
-│   │   │   └── Loading.tsx
-│   │   ├── layout/                  # Layout components
-│   │   │   ├── Header.tsx
-│   │   │   ├── Footer.tsx
-│   │   │   └── Sidebar.tsx
-│   │   ├── forms/                   # Form components
-│   │   │   ├── LoginForm.tsx
-│   │   │   ├── RegisterForm.tsx
-│   │   │   └── ReviewForm.tsx
-│   │   └── common/                  # Common components
-│   │       ├── Card.tsx
-│   │       ├── Badge.tsx
-│   │       └── StarRating.tsx
+│   ├── main.js                      # Application entry point
+│   ├── App.vue                      # Root component
+│   ├── assets/                      # Static assets
+│   │   └── logo.svg                 # Application logo
+│   ├── style.css                    # Global styles
+│   ├── components/                  # Reusable Vue components
+│   │   ├── AvatarCropper.vue        # Avatar cropping component
+│   │   ├── CafeteriaCard.vue        # Cafeteria display card
+│   │   ├── Header.vue               # Application header
+│   │   ├── ImageGallery.vue         # Image gallery viewer
+│   │   ├── ImageUpload.vue          # Image upload component
+│   │   ├── ImageUploadDialog.vue    # Image upload modal
+│   │   ├── ImageViewer.vue          # Image viewer component
+│   │   ├── MapSection.vue           # Map integration component
+│   │   ├── ReviewCard.vue           # Review display card
+│   │   ├── ReviewForm.vue           # Review submission form
+│   │   ├── ReviewList.vue           # Review list component
+│   │   ├── StallCard.vue            # Stall display card
+│   │   └── admin/                   # Admin components
+│   │       ├── AdminLayout.vue      # Admin layout wrapper
+│   │       ├── CafeteriaForm.vue    # Cafeteria creation/editing form
+│   │       ├── OpeningHoursInput.vue # Opening hours input component
+│   │       ├── StallForm.vue        # Stall creation/editing form
+│   │       ├── StatCard.vue         # Statistics display card
+│   │       └── charts/
+│   │           └── UserGrowthChart.vue  # User growth visualization
 │   ├── pages/                       # Page components
-│   │   ├── Home.tsx                 # Home page
-│   │   ├── Login.tsx                # Login page
-│   │   ├── Register.tsx             # Registration page
-│   │   ├── Dashboard.tsx            # User dashboard
-│   │   ├── Cafeterias.tsx           # Cafeteria listing
-│   │   ├── StallDetail.tsx          # Stall details
-│   │   ├── Profile.tsx              # User profile
-│   │   ├── Favorites.tsx            # Favorites page
-│   │   └── admin/                   # Admin pages
-│   │       ├── AdminDashboard.tsx
-│   │       ├── UserManagement.tsx
-│   │       └── Reports.tsx
-│   ├── hooks/                       # Custom React hooks
-│   │   ├── useAuth.ts               # Authentication hook
-│   │   ├── useLocalStorage.ts       # Local storage hook
-│   │   ├── useDebounce.ts           # Debounce hook
-│   │   └── useInfiniteScroll.ts     # Infinite scroll hook
-│   ├── store/                       # Redux store configuration
-│   │   ├── index.ts                 # Store configuration
-│   │   ├── slices/                  # Redux slices
-│   │   │   ├── authSlice.ts         # Authentication state
-│   │   │   ├── uiSlice.ts           # UI state
-│   │   │   └── favoritesSlice.ts    # Favorites state
-│   │   └── api/                     # RTK Query API
-│   │       ├── authApi.ts           # Authentication API
-│   │       ├── cafeteriaApi.ts      # Cafeteria API
-│   │       ├── stallApi.ts          # Stall API
-│   │       └── reviewApi.ts         # Review API
+│   │   ├── AllReviewsPage.vue       # All reviews listing page
+│   │   ├── CafeteriaDetail.vue      # Cafeteria details page
+│   │   ├── FavoritesPage.vue        # User favorites page
+│   │   ├── ForgotPassword.vue       # Password recovery page
+│   │   ├── HomePage.vue             # Home page
+│   │   ├── LoginPage.vue            # Login page
+│   │   ├── MyReviewsPage.vue        # User reviews page
+│   │   ├── ProfilePage.vue          # User profile page
+│   │   ├── RegisterPage.vue         # Registration page
+│   │   ├── SettingsPage.vue         # Settings page
+│   │   └── StallDetail.vue          # Stall details page
+│   ├── views/                       # View components (admin)
+│   │   └── admin/                   # Admin panel views
+│   │       ├── AdminDashboard.vue   # Admin dashboard
+│   │       ├── AdminLogin.vue       # Admin login page
+│   │       ├── CafeteriaManagement.vue # Cafeteria management
+│   │       ├── ChangePassword.vue   # Password change page
+│   │       ├── ContentModeration.vue # Content moderation
+│   │       ├── ImageManagement.vue  # Image management
+│   │       ├── ReviewManagement.vue # Review management
+│   │       ├── StallManagement.vue  # Stall management
+│   │       ├── TokenDebug.vue       # Token debugging utility
+│   │       └── UserManagement.vue   # User management
+│   ├── router/                      # Vue Router configuration
+│   │   ├── index.js                 # Router setup and routes
+│   │   └── guards/
+│   │       └── adminGuard.js        # Admin route protection
+│   ├── stores/                      # Pinia state management
+│   │   ├── cafeteria.js             # Cafeteria state store
+│   │   ├── locale.js                # Locale/language store
+│   │   ├── stall.js                 # Stall state store
+│   │   └── user.js                  # User state store
 │   ├── services/                    # Business logic services
-│   │   ├── api.ts                   # API client configuration
-│   │   ├── auth.ts                  # Authentication service
-│   │   └── storage.ts               # Storage service
-│   ├── utils/                       # Utility functions
-│   │   ├── constants.ts             # Application constants
-│   │   ├── helpers.ts               # Helper functions
-│   │   ├── formatters.ts            # Data formatters
-│   │   └── validators.ts            # Form validators
-│   ├── types/                       # TypeScript type definitions
-│   │   ├── auth.ts                  # Auth types
-│   │   ├── api.ts                   # API response types
-│   │   ├── cafeteria.ts             # Cafeteria types
-│   │   └── user.ts                  # User types
-│   └── styles/                      # Styles and assets
-│       ├── globals.css              # Global styles
-│       └── components.css           # Component styles
-├── tests/                           # Test files
-│   ├── __mocks__/                   # Mock files
-│   ├── components/                  # Component tests
-│   ├── pages/                       # Page tests
-│   └── utils/                       # Utility tests
-└── dist/                            # Build output
+│   │   ├── authService.js           # Authentication service
+│   │   ├── cafeteriaService.js      # Cafeteria API service
+│   │   ├── favoriteService.js       # Favorites management service
+│   │   ├── imageService.js          # Image handling service
+│   │   ├── reviewService.js         # Review API service
+│   │   ├── searchService.js         # Search functionality service
+│   │   ├── stallService.js          # Stall API service
+│   │   ├── uploadService.js         # File upload service
+│   │   └── admin/                   # Admin-specific services
+│   │       ├── imageService.js      # Admin image service
+│   │       └── reportService.js     # Admin reporting service
+│   ├── api/                         # API layer
+│   │   └── admin/                   # Admin API endpoints
+│   │       ├── auth.js              # Admin authentication API
+│   │       ├── cafeteria.js         # Cafeteria management API
+│   │       ├── dashboard.js         # Dashboard data API
+│   │       ├── moderation.js        # Content moderation API
+│   │       ├── stall.js             # Stall management API
+│   │       ├── user.js              # User management API
+│   │       └── users.js             # Users management API
+│   ├── locales/                     # Internationalization
+│   │   ├── index.js                 # I18n configuration
+│   │   ├── en-US.js                 # English translations
+│   │   └── zh-CN.js                 # Chinese translations
+│   └── utils/                       # Utility functions
+│       ├── config.js                # Application configuration
+│       ├── date.js                  # Date formatting utilities
+│       ├── distance.js              # Distance calculation utilities
+│       ├── request.js               # HTTP request utilities
+│       ├── role.js                  # Role-based utilities
+│       └── stallDebugger.js         # Stall debugging utilities
+└── dist/                            # Build output directory
 ```
 
 ## 🔧 Configuration
@@ -160,63 +168,40 @@ nushungry-frontend/
 
 ```bash
 # API Configuration
-VITE_API_BASE_URL=http://localhost:8080/api
-VITE_API_TIMEOUT=10000
-
-# Authentication
-VITE_JWT_STORAGE_KEY=nushungry_token
-VITE_REFRESH_TOKEN_KEY=nushungry_refresh_token
+VITE_BACKEND_URL=http://localhost:8080
 
 # Application Settings
 VITE_APP_NAME=NUSHungry
 VITE_APP_VERSION=1.0.0
-VITE_ENABLE_ANALYTICS=false
-
-# Feature Flags
-VITE_ENABLE_PWA=true
-VITE_ENABLE_DARK_MODE=true
-VITE_ENABLE_OFFLINE_SUPPORT=false
 ```
 
 ### Vite Configuration
 
-```typescript
-// vite.config.ts
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { resolve } from 'path'
+```javascript
+// vite.config.js
+import { defineConfig, loadEnv } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { fileURLToPath, URL } from 'node:url'
 
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-      '@components': resolve(__dirname, 'src/components'),
-      '@pages': resolve(__dirname, 'src/pages'),
-      '@hooks': resolve(__dirname, 'src/hooks'),
-      '@utils': resolve(__dirname, 'src/utils'),
-      '@types': resolve(__dirname, 'src/types'),
-      '@store': resolve(__dirname, 'src/store')
-    }
-  },
-  server: {
-    port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd())
+
+  return {
+    plugins: [vue()],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
       }
-    }
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          redux: ['@reduxjs/toolkit', 'react-redux']
+    },
+    server: {
+      proxy: {
+        '/api': {
+          target: env.VITE_BACKEND_URL || 'http://localhost:8080',
+          changeOrigin: true
+        },
+        '/uploads': {
+          target: env.VITE_BACKEND_URL || 'http://localhost:8080',
+          changeOrigin: true
         }
       }
     }
@@ -224,12 +209,41 @@ export default defineConfig({
 })
 ```
 
+### Key Dependencies
+
+```json
+{
+  "dependencies": {
+    "vue": "^3.5.21",
+    "vue-router": "^4.5.1",
+    "pinia": "^2.1.7",
+    "ant-design-vue": "^4.0.0-rc.6",
+    "element-plus": "^2.11.4",
+    "axios": "^1.4.0",
+    "vue-i18n": "^9.14.5",
+    "echarts": "^6.0.0",
+    "leaflet": "^1.9.4",
+    "cropperjs": "^1.6.2",
+    "vuedraggable": "^4.1.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.5",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vitest": "^3.2.4",
+    "eslint": "^9.36.0",
+    "eslint-plugin-vue": "^10.5.0",
+    "sass-embedded": "^1.93.2",
+    "less": "^4.4.2"
+  }
+}
+```
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - **Node.js 18** or higher
-- **npm 9** or **yarn 1.22** or higher
+- **npm 9** or higher
 - **Git**
 
 ### Development Setup
@@ -242,34 +256,39 @@ export default defineConfig({
 
 2. **Install Dependencies**
    ```bash
-   # Using npm
    npm install
-   
-   # Using yarn
-   yarn install
    ```
 
 3. **Environment Configuration**
    ```bash
-   # Copy environment template
-   cp .env.example .env.local
-   
-   # Edit configuration
-   # Set VITE_API_BASE_URL to your backend API
+   # Create environment file
+   echo "VITE_BACKEND_URL=http://localhost:8080" > .env.local
+
+   # Edit configuration as needed
+   # Set VITE_BACKEND_URL to your backend API
    ```
 
 4. **Start Development Server**
    ```bash
-   # Using npm
    npm run dev
-   
-   # Using yarn
-   yarn dev
    ```
 
 5. **Access the Application**
-   - **Application URL**: `http://localhost:3000`
+   - **Application URL**: `http://localhost:5173` (Vite's default port)
    - **API Documentation**: Available via backend service
+
+### Testing
+
+```bash
+# Run tests in watch mode
+npm run test
+
+# Run tests once (CI mode)
+npm run test:ci
+
+# Run ESLint
+npm run lint
+```
 
 ### Production Deployment
 
@@ -279,9 +298,6 @@ npm run build
 
 # Preview production build
 npm run preview
-
-# Build and analyze bundle size
-npm run build -- --analyze
 ```
 
 ### Docker Deployment
@@ -291,11 +307,43 @@ npm run build -- --analyze
 docker build -t nushungry-frontend .
 
 # Run Container
-docker run -p 3000:3000 \
-  -e VITE_API_BASE_URL=http://your-backend-api:8080/api \
+docker run -p 5173:5173 \
+  -e VITE_BACKEND_URL=http://your-backend-api:8080 \
   nushungry-frontend
+
+# Or use Docker Compose
+docker-compose up -d
 ```
+
+## 🔧 Technology Stack
+
+### Core Framework
+- **Vue 3.5+**: Progressive JavaScript framework with Composition API
+- **Vite 7.1+**: Fast build tool and development server
+- **Vue Router 4.5+**: Official routing solution for Vue
+
+### State Management
+- **Pinia 2.1+**: Official state management library for Vue
+- **Reactive Stores**: Modular and type-safe state management
+
+### UI Components
+- **Ant Design Vue 4.0**: Enterprise-class UI design language
+- **Element Plus 2.11**: Vue 3 UI component library
+- **Custom Components**: Specialized components for cafeteria/stall management
+
+### Data & Utilities
+- **Axios 1.4+**: Promise-based HTTP client
+- **Vue I18n 9.14**: Internationalization plugin
+- **ECharts 6.0**: Data visualization library
+- **Leaflet 1.9**: Open-source JavaScript maps
+- **Cropper.js 1.6**: Image cropping functionality
+- **VueDraggable 4.1**: Drag and drop functionality
+
+### Development Tools
+- **Vitest 3.2+**: Next generation testing framework
+- **ESLint 9.36**: JavaScript linting utility
+- **Sass/Less**: CSS preprocessing support
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
