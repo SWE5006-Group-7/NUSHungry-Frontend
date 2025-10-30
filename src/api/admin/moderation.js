@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-const API_BASE = '/admin/reviews'
+const API_BASE = '/reviews/admin'
 
 export default {
   /**
